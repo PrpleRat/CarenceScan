@@ -1,0 +1,6 @@
+// Stub Release — remplacé par install-signing en CI TestFlight.
+#include? "Release-App.xcconfig"
+
+CODE_SIGN_STYLE = Manual
+DEVELOPMENT_TEAM = 4N92TKQ397
+PROVISIONING_PROFILE_SPECIFIER = CarenceScan App Store

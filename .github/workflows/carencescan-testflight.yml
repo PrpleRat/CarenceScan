@@ -1,0 +1,156 @@
+name: CarenceScan TestFlight
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload_testflight:
+        description: "Uploader vers TestFlight après export"
+        type: boolean
+        default: true
+      build_number:
+        description: "CFBundleVersion (vide = numéro de run GitHub)"
+        type: string
+        required: false
+        default: ""
+
+env:
+  XCODE_SCHEME: CarenceScan
+  IOS_DEPLOYMENT_TARGET: "17.0"
+  XCODE_VERSION: "26.2"
+  DEVELOPMENT_TEAM: "4N92TKQ397"
+  BUNDLE_ID_APP: com.carencescan.app
+
+concurrency:
+  group: carencescan-testflight-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  archive-and-upload:
+    name: Archive + IPA + TestFlight
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sélectionner Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+
+      - name: Vérifier la structure
+        run: |
+          test -f project.yml
+          test -f ci/signing-from-api.sh
+          test -f CarenceScan/Resources/carences_base.json
+          bash ci/verify-no-critical-entitlements.sh
+          xcodebuild -version
+
+      - name: Signing via API Apple
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          if [ -z "$ASC_KEY_ID" ] || [ -z "$ASC_ISSUER_ID" ] || [ -z "$ASC_PRIVATE_KEY" ]; then
+            echo "::error::Secrets ASC_KEY_ID, ASC_ISSUER_ID, ASC_PRIVATE_KEY requis"
+            exit 1
+          fi
+          bash ci/signing-from-api.sh
+
+      - name: Générer les icônes App Store
+        run: python3 ci/generate-app-icons.py
+
+      - name: Numéro de build
+        id: buildno
+        run: |
+          if [ -n "${{ github.event.inputs.build_number }}" ]; then
+            BN="${{ github.event.inputs.build_number }}"
+          else
+            BN=$(( ${{ github.run_number }} * 10 + ${{ github.run_attempt }} ))
+          fi
+          if [ "$BN" -le 1 ]; then
+            BN=2
+          fi
+          echo "value=$BN" >> "$GITHUB_OUTPUT"
+          echo "CFBundleVersion=$BN"
+
+      - name: Appliquer le numéro de build
+        run: |
+          BN="${{ steps.buildno.outputs.value }}"
+          sed -i.bak "s/CURRENT_PROJECT_VERSION: \".*\"/CURRENT_PROJECT_VERSION: \"$BN\"/" project.yml
+          grep CURRENT_PROJECT_VERSION project.yml
+
+      - name: Installer XcodeGen
+        run: |
+          brew install xcodegen
+          xcodegen generate --spec project.yml
+
+      - name: Archive (Release)
+        env:
+          ARCHIVE_PATH: ${{ runner.temp }}/CarenceScan.xcarchive
+        run: |
+          set -euo pipefail
+          LOG="${RUNNER_TEMP}/xcode-archive.log"
+          set +e
+          xcodebuild archive \
+            -project "CarenceScan.xcodeproj" \
+            -scheme "${{ env.XCODE_SCHEME }}" \
+            -configuration Release \
+            -archivePath "$ARCHIVE_PATH" \
+            -destination "generic/platform=iOS" \
+            -sdk iphoneos \
+            IPHONEOS_DEPLOYMENT_TARGET="${{ env.IOS_DEPLOYMENT_TARGET }}" \
+            DEVELOPMENT_TEAM="${{ env.DEVELOPMENT_TEAM }}" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            CURRENT_PROJECT_VERSION="${{ steps.buildno.outputs.value }}" \
+            OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
+            2>&1 | tee "$LOG"
+          STATUS=${PIPESTATUS[0]}
+          set -e
+          if [ "$STATUS" -ne 0 ]; then
+            grep -E "error:" "$LOG" | tail -60 || true
+            exit "$STATUS"
+          fi
+
+      - name: Export IPA
+        env:
+          ARCHIVE_PATH: ${{ runner.temp }}/CarenceScan.xcarchive
+          EXPORT_PATH: ${{ runner.temp }}/export
+        run: |
+          rm -rf "$EXPORT_PATH"
+          mkdir -p "$EXPORT_PATH"
+          xcodebuild -exportArchive \
+            -archivePath "$ARCHIVE_PATH" \
+            -exportPath "$EXPORT_PATH" \
+            -exportOptionsPlist ExportOptions-ci.plist
+          test -f "$EXPORT_PATH/CarenceScan.ipa"
+
+      - name: Upload artifact IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: CarenceScan-ipa
+          path: ${{ runner.temp }}/export/CarenceScan.ipa
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload vers TestFlight
+        id: testflight_upload
+        if: ${{ github.event.inputs.upload_testflight != 'false' }}
+        uses: apple-actions/upload-testflight-build@v3
+        with:
+          app-path: ${{ runner.temp }}/export/CarenceScan.ipa
+          issuer-id: ${{ secrets.ASC_ISSUER_ID }}
+          api-key-id: ${{ secrets.ASC_KEY_ID }}
+          api-private-key: ${{ secrets.ASC_PRIVATE_KEY }}
+
+      - name: Résumé
+        if: always()
+        run: |
+          echo "## CarenceScan — Build ${{ steps.buildno.outputs.value }}" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.testflight_upload.outcome }}" = "success" ]; then
+            echo "Upload TestFlight : **OK**" >> "$GITHUB_STEP_SUMMARY"
+            echo "App Store Connect → **CarenceScan** → TestFlight" >> "$GITHUB_STEP_SUMMARY"
+          fi
