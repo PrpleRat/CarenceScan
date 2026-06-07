@@ -42,5 +42,7 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>CarenceScan peut vous envoyer un rappel quotidien pour noter vos symptômes et suivre leur évolution.</string>
 </dict>
 </plist>

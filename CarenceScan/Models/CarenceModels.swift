@@ -122,6 +122,8 @@ struct Carence: Codable, Identifiable {
     let alimentsCles: [String]
     let complement: ComplementInfo
     let urgence: String
+    let quandSinquieter: String?
+    let signesAlerte: [String]?
     let prescriptionObligatoire: Bool?
     let interactionsMedicaments: [String]?
 
@@ -136,6 +138,8 @@ struct Carence: Codable, Identifiable {
         case seuilQuasiCertain = "seuil_quasi_certain"
         case combinaisonsAmplificatrices = "combinaisons_amplificatrices"
         case alimentsCles = "aliments_cles"
+        case quandSinquieter = "quand_sinquieter"
+        case signesAlerte = "signes_alerte"
         case prescriptionObligatoire = "prescription_obligatoire"
         case interactionsMedicaments = "interactions_medicaments"
     }

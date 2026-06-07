@@ -20,4 +20,11 @@ enum AppConstants {
 
     static let resultsStorageKey = "carencescan.lastResults"
     static let questionnaireStorageKey = "carencescan.questionnaire.draft"
+    static let journalStorageKey = "carencescan.symptom.journal"
+    static let trackingSettingsKey = "carencescan.tracking.settings"
+    static let bilanHistoryKey = "carencescan.bilan.history"
+
+    static let dailyReminderNotificationId = "carencescan.daily.symptoms"
+    static let notificationPermissionMessage =
+        "CarenceScan peut vous rappeler chaque jour de noter vos symptômes pour suivre leur évolution dans le temps."
 }

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ResultsView: View {
     @EnvironmentObject private var vm: QuestionnaireViewModel
+    @EnvironmentObject private var tracker: SymptomTrackerViewModel
     @Environment(\.dismiss) private var dismiss
     var onRestart: () -> Void = {}
 
@@ -61,6 +62,10 @@ struct ResultsView: View {
 
                 if let payload {
                     ExportButton(payload: payload)
+                }
+
+                if ResultsStorage.hasSavedResults {
+                    suiviQuickLinks
                 }
 
                 Button("Refaire le test") {
@@ -206,6 +211,42 @@ struct ResultsView: View {
         }
     }
 
+    private var suiviQuickLinks: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Suivi quotidien")
+                .font(.headline)
+                .foregroundStyle(CarenceColors.textPrimary)
+            Text("Notez vos symptômes chaque jour pour voir s'ils s'améliorent.")
+                .font(.caption)
+                .foregroundStyle(CarenceColors.textSecondary)
+
+            NavigationLink {
+                DailyCheckInView()
+            } label: {
+                Label("Check-in du jour", systemImage: "calendar.badge.checkmark")
+            }
+            .tint(CarenceColors.primary)
+
+            NavigationLink {
+                SymptomEvolutionView()
+            } label: {
+                Label("Voir l'évolution", systemImage: "chart.bar.fill")
+            }
+            .tint(CarenceColors.primary)
+
+            NavigationLink {
+                TrackingSettingsView()
+            } label: {
+                Label("Activer les rappels", systemImage: "bell.badge")
+            }
+            .tint(CarenceColors.primary)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(CarenceColors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
     private var emptyState: some View {
         VStack(spacing: 12) {
             Image(systemName: "doc.text.magnifyingglass")
@@ -224,5 +265,6 @@ struct ResultsView: View {
     NavigationStack {
         ResultsView()
             .environmentObject(QuestionnaireViewModel())
+            .environmentObject(SymptomTrackerViewModel.shared)
     }
 }

@@ -49,4 +49,41 @@ enum CarenceDatabase {
         }
         return shared.bilansSanguinsRecommandes.filter { ids.contains($0.id) }
     }
+
+    static func carencesLiees(symptomeId: String) -> [SymptomeCarenceLink] {
+        shared.carences.compactMap { carence -> SymptomeCarenceLink? in
+            guard let score = carence.scoreParSymptome[symptomeId], score > 0 else { return nil }
+            let tier: SymptomeCarenceTier
+            if carence.symptomesPrimaires.contains(symptomeId) {
+                tier = .primaire
+            } else if carence.symptomesSecondaires.contains(symptomeId) {
+                tier = .secondaire
+            } else if carence.symptomesContextuels.contains(symptomeId) {
+                tier = .contextuel
+            } else {
+                tier = .associe
+            }
+            return SymptomeCarenceLink(
+                carenceId: carence.id,
+                carenceNom: carence.nom,
+                tier: tier,
+                score: score
+            )
+        }
+        .sorted { lhs, rhs in
+            if lhs.tier.sortOrder != rhs.tier.sortOrder { return lhs.tier.sortOrder < rhs.tier.sortOrder }
+            return lhs.score > rhs.score
+        }
+    }
+}
+
+private extension SymptomeCarenceTier {
+    var sortOrder: Int {
+        switch self {
+        case .primaire: return 0
+        case .secondaire: return 1
+        case .contextuel: return 2
+        case .associe: return 3
+        }
+    }
 }

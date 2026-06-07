@@ -138,6 +138,8 @@ final class QuestionnaireViewModel: ObservableObject {
         )
         savedPayload = payload
         ResultsStorage.save(payload)
+        SymptomJournalStorage.appendBilanHistory(payload)
+        SymptomTrackerViewModel.shared.syncTrackedSymptoms(from: symptomeSelections)
     }
 
     func loadSavedResults() {
