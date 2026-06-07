@@ -115,6 +115,7 @@ struct ResultsView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Carences probables")
                 .font(.headline)
+                .foregroundStyle(CarenceColors.textPrimary)
 
             ForEach(vm.scores) { score in
                 if let carence = CarenceDatabase.carence(for: score.carenceId) {
@@ -128,11 +129,13 @@ struct ResultsView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Soins locaux recommandés")
                 .font(.headline)
+                .foregroundStyle(CarenceColors.textPrimary)
 
             ForEach(soinsLocaux) { soin in
                 VStack(alignment: .leading, spacing: 4) {
                     Text(soin.nom)
                         .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(CarenceColors.textPrimary)
                     Text(soin.utilisation)
                         .font(.caption)
                         .foregroundStyle(CarenceColors.textSecondary)
@@ -152,11 +155,13 @@ struct ResultsView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Bilan sanguin suggéré")
                 .font(.headline)
+                .foregroundStyle(CarenceColors.textPrimary)
 
             ForEach(bilans) { bilan in
                 VStack(alignment: .leading, spacing: 6) {
                     Text(bilan.label)
                         .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(CarenceColors.textPrimary)
                     Text(bilan.indication)
                         .font(.caption)
                         .foregroundStyle(CarenceColors.textSecondary)
@@ -188,6 +193,7 @@ struct ResultsView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Conseils selon votre contexte")
                 .font(.headline)
+                .foregroundStyle(CarenceColors.textPrimary)
             ForEach(Array(Set(conseils)).sorted(), id: \.self) { conseil in
                 Text(conseil)
                     .font(.caption)

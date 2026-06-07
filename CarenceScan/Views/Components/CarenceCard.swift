@@ -77,6 +77,7 @@ struct CarenceCard: View {
                         Text(groupe.emoji)
                         Text(groupe.label)
                             .font(.caption.bold())
+                            .foregroundStyle(CarenceColors.textPrimary)
                     }
 
                     ForEach(groupe.notesConfusion, id: \.id) { note in

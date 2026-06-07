@@ -35,9 +35,10 @@ struct ContexteNoteView: View {
                                         .font(.caption2)
                                     Text(source.label)
                                         .font(.caption2)
+                                        .underline()
                                 }
+                                .foregroundStyle(CarenceColors.primary)
                             }
-                            .tint(CarenceColors.primary)
                         }
                     }
                 }
