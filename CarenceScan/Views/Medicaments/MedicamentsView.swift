@@ -2,9 +2,7 @@ import SwiftUI
 
 struct MedicamentsView: View {
     @EnvironmentObject private var vm: QuestionnaireViewModel
-    var onAnalyze: () -> Void = {}
-
-    @State private var showResults = false
+    @State private var showContextes = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -65,11 +63,8 @@ struct MedicamentsView: View {
         .background(CarenceColors.background.ignoresSafeArea())
         .navigationTitle("Médicaments")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(isPresented: $showResults) {
-            ResultsView(onRestart: {
-                vm.resetQuestionnaire()
-                showResults = false
-            })
+        .navigationDestination(isPresented: $showContextes) {
+            ContextesMedicauxView()
         }
     }
 
@@ -77,18 +72,16 @@ struct MedicamentsView: View {
         VStack(spacing: 0) {
             Divider()
             Button {
-                vm.analyser()
-                showResults = true
-                onAnalyze()
+                showContextes = true
             } label: {
-                Text("Analyser")
+                Text("Continuer")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
             .tint(CarenceColors.primary)
             .padding()
-            .accessibilityLabel("Analyser mes symptômes")
+            .accessibilityLabel("Continuer vers les contextes médicaux")
         }
         .background(CarenceColors.surface)
     }

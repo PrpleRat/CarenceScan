@@ -2,16 +2,21 @@
 
 **Application iOS de santé** — questionnaire symptômes → carences probables → fiche PDF pour votre médecin.
 
-> **100 % locale** — pas d'API, pas d'IA externe. Logique basée sur `carences_base.json`.
+> **100 % locale** — pas d'API, pas d'IA externe. Logique basée sur `carences_base.json` v1.2.
 
-## Fonctionnalités
+## Fonctionnalités (v1.2)
 
-- Questionnaire symptômes par catégories (accordéons)
-- Prise en compte des médicaments dépleteurs
-- Moteur de scoring avec combinaisons amplificatrices
-- Alertes médicales (fer, ISRS/5-HTP, syndromes combinatoires)
+- **Profil** : sexe biologique, tranche d'âge, situation hormonale (femme)
+- **Questionnaire** symptômes par catégories + **fréquence** (occasionnel / fréquent / constant)
+- Médicaments dépleteurs + **10 contextes médicaux** (dépression, thyroïde, diabète…)
+- Moteur de scoring : combinaisons, ajustements profil, coefficients fréquence, notes contexte
+- Alertes médicales (grossesse, fer, ISRS/5-HTP)
 - Export PDF partageable
 - Persistance des derniers résultats (UserDefaults)
+
+## Flux
+
+`Accueil → Profil → Questionnaire → Médicaments → Contextes → Résultats`
 
 ## Prérequis
 

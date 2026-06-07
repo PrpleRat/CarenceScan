@@ -23,6 +23,15 @@ struct ResultsView: View {
             VStack(alignment: .leading, spacing: 20) {
                 headerSection
 
+                if let profil = vm.profil,
+                   profil.situationHormonale == .enceinte || profil.situationHormonale == .allaitante {
+                    grossesseBanner(profil: profil)
+                }
+
+                if let payload, !payload.conseilsContexte.isEmpty {
+                    conseilsContexteSection(payload.conseilsContexte)
+                }
+
                 if !vm.reglesDetectees.isEmpty {
                     alertesSection
                 }
@@ -159,6 +168,34 @@ struct ResultsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(CarenceColors.warningBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+        }
+    }
+
+    private func grossesseBanner(profil: ProfilUtilisateur) -> some View {
+        let titre = profil.situationHormonale == .enceinte ? "🤱 Vous êtes enceinte" : "🤱 Vous allaitez"
+        return AlerteBanner(
+            message: """
+            \(titre)
+            Consultez votre sage-femme ou médecin avant toute supplémentation.
+            Certaines carences identifiées sont critiques pour vous et votre bébé.
+            """,
+            style: .alert
+        )
+    }
+
+    private func conseilsContexteSection(_ conseils: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Conseils selon votre contexte")
+                .font(.headline)
+            ForEach(Array(Set(conseils)).sorted(), id: \.self) { conseil in
+                Text(conseil)
+                    .font(.caption)
+                    .foregroundStyle(CarenceColors.textSecondary)
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(CarenceColors.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
             }
         }
     }

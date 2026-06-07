@@ -4,35 +4,80 @@ import SwiftUI
 @MainActor
 final class QuestionnaireViewModel: ObservableObject {
 
-    @Published var symptomesSelectionnes: Set<String> = []
+    @Published var profil: ProfilUtilisateur?
+    @Published var symptomeSelections: [SymptomeSelection] = []
     @Published var medicamentsSelectionnes: Set<String> = []
+    @Published var contextesSelectionnes: Set<String> = []
     @Published var aucunMedicament = false
+    @Published var aucunContexte = false
     @Published var scores: [ScoreResult] = []
     @Published var reglesDetectees: [RegleCombination] = []
     @Published var savedPayload: SavedResultsPayload?
 
     let database = CarenceDatabase.shared
 
-    var selectedSymptomCount: Int { symptomesSelectionnes.count }
+    var symptomesSelectionnes: Set<String> {
+        Set(symptomeSelections.map(\.symptomeId))
+    }
+
+    var selectedSymptomCount: Int { symptomeSelections.count }
+
+    var profilComplet: Bool {
+        guard let profil else { return false }
+        if profil.sexe == .femme {
+            return true
+        }
+        return true
+    }
 
     func restoreDraftIfNeeded() {
         guard let draft = ResultsStorage.loadDraft() else { return }
-        symptomesSelectionnes = Set(draft.symptomes)
+        profil = draft.profil
+        if let selections = draft.symptomeSelections, !selections.isEmpty {
+            symptomeSelections = selections
+        } else {
+            symptomeSelections = draft.symptomes.map { SymptomeSelection(symptomeId: $0) }
+        }
         medicamentsSelectionnes = Set(draft.medicaments)
-        aucunMedicament = medicamentsSelectionnes.isEmpty
+        contextesSelectionnes = Set(draft.contextes)
+        aucunMedicament = medicamentsSelectionnes.isEmpty && draft.aucunMedicament
+        aucunContexte = contextesSelectionnes.isEmpty && draft.aucunContexte
+    }
+
+    func setProfil(_ profil: ProfilUtilisateur) {
+        var p = profil
+        if p.sexe == .homme {
+            p.situationHormonale = .nonApplicable
+        }
+        self.profil = p
+        persistDraft()
     }
 
     func toggleSymptome(_ id: String) {
-        if symptomesSelectionnes.contains(id) {
-            symptomesSelectionnes.remove(id)
+        if let index = symptomeSelections.firstIndex(where: { $0.symptomeId == id }) {
+            symptomeSelections.remove(at: index)
         } else {
-            symptomesSelectionnes.insert(id)
+            symptomeSelections.append(SymptomeSelection(symptomeId: id))
         }
         persistDraft()
     }
 
+    func setFrequence(symptomeId: String, frequence: Frequence) {
+        guard let index = symptomeSelections.firstIndex(where: { $0.symptomeId == symptomeId }) else { return }
+        symptomeSelections[index].frequence = frequence
+        persistDraft()
+    }
+
+    func frequence(for symptomeId: String) -> Frequence {
+        symptomeSelections.first(where: { $0.symptomeId == symptomeId })?.frequence ?? .frequent
+    }
+
+    func isSymptomeSelected(_ id: String) -> Bool {
+        symptomeSelections.contains { $0.symptomeId == id }
+    }
+
     func deselectAllSymptomes() {
-        symptomesSelectionnes.removeAll()
+        symptomeSelections.removeAll()
         persistDraft()
     }
 
@@ -52,21 +97,44 @@ final class QuestionnaireViewModel: ObservableObject {
         persistDraft()
     }
 
+    func toggleContexte(_ id: String) {
+        aucunContexte = false
+        if contextesSelectionnes.contains(id) {
+            contextesSelectionnes.remove(id)
+        } else {
+            contextesSelectionnes.insert(id)
+        }
+        persistDraft()
+    }
+
+    func selectAucunContexte() {
+        contextesSelectionnes.removeAll()
+        aucunContexte = true
+        persistDraft()
+    }
+
     func analyser() {
+        let contextesActifs = database.contextesMedicaux.filter { contextesSelectionnes.contains($0.id) }
         reglesDetectees = ScoringEngine.detecterCombinaisonsSpeciales(
             symptomesSelectionnes: symptomesSelectionnes,
             regles: database.reglesCombinatoiresSpeciales
         )
         scores = ScoringEngine.calculerScores(
-            symptomesSelectionnes: symptomesSelectionnes,
-            medicamentsSelectionnes: medicamentsSelectionnes
+            selections: symptomeSelections,
+            medicamentsSelectionnes: medicamentsSelectionnes,
+            profil: profil,
+            contextesActifs: contextesActifs
         )
+        let conseils = contextesActifs.map(\.conseil)
         let payload = SavedResultsPayload(
             date: Date(),
-            symptomesSelectionnes: Array(symptomesSelectionnes),
+            symptomeSelections: symptomeSelections,
             medicamentsSelectionnes: Array(medicamentsSelectionnes),
+            contextesSelectionnes: Array(contextesSelectionnes),
+            profil: profil,
             scores: scores,
-            reglesDetectees: reglesDetectees.map(\.id)
+            reglesDetectees: reglesDetectees.map(\.id),
+            conseilsContexte: conseils
         )
         savedPayload = payload
         ResultsStorage.save(payload)
@@ -75,9 +143,12 @@ final class QuestionnaireViewModel: ObservableObject {
     func loadSavedResults() {
         guard let payload = ResultsStorage.load() else { return }
         savedPayload = payload
-        symptomesSelectionnes = Set(payload.symptomesSelectionnes)
+        profil = payload.profil
+        symptomeSelections = payload.symptomeSelections
         medicamentsSelectionnes = Set(payload.medicamentsSelectionnes)
+        contextesSelectionnes = Set(payload.contextesSelectionnes)
         aucunMedicament = medicamentsSelectionnes.isEmpty
+        aucunContexte = contextesSelectionnes.isEmpty
         scores = payload.scores
         reglesDetectees = database.reglesCombinatoiresSpeciales.filter {
             payload.reglesDetectees.contains($0.id)
@@ -85,9 +156,12 @@ final class QuestionnaireViewModel: ObservableObject {
     }
 
     func resetQuestionnaire() {
-        symptomesSelectionnes.removeAll()
+        profil = nil
+        symptomeSelections.removeAll()
         medicamentsSelectionnes.removeAll()
+        contextesSelectionnes.removeAll()
         aucunMedicament = false
+        aucunContexte = false
         scores.removeAll()
         reglesDetectees.removeAll()
         savedPayload = nil
@@ -100,6 +174,13 @@ final class QuestionnaireViewModel: ObservableObject {
     }
 
     private func persistDraft() {
-        ResultsStorage.saveDraft(symptomes: symptomesSelectionnes, medicaments: medicamentsSelectionnes)
+        ResultsStorage.saveDraft(
+            profil: profil,
+            symptomeSelections: symptomeSelections,
+            medicaments: medicamentsSelectionnes,
+            contextes: contextesSelectionnes,
+            aucunMedicament: aucunMedicament,
+            aucunContexte: aucunContexte
+        )
     }
 }

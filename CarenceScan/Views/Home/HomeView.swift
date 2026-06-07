@@ -2,7 +2,7 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject private var vm: QuestionnaireViewModel
-    @State private var showQuestionnaire = false
+    @State private var showProfil = false
     @State private var showResults = false
 
     var body: some View {
@@ -24,7 +24,7 @@ struct HomeView: View {
 
                 Button {
                     vm.restoreDraftIfNeeded()
-                    showQuestionnaire = true
+                    showProfil = true
                 } label: {
                     Text("Commencer le questionnaire")
                         .frame(maxWidth: .infinity)
@@ -53,14 +53,14 @@ struct HomeView: View {
             .padding(24)
         }
         .background(CarenceColors.background.ignoresSafeArea())
-        .navigationDestination(isPresented: $showQuestionnaire) {
-            QuestionnaireView(onContinue: { showResults = false })
+        .navigationDestination(isPresented: $showProfil) {
+            ProfilView()
         }
         .navigationDestination(isPresented: $showResults) {
             ResultsView(onRestart: {
                 vm.resetQuestionnaire()
                 showResults = false
-                showQuestionnaire = true
+                showProfil = true
             })
         }
     }

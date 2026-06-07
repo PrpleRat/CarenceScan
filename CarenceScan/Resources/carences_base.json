@@ -1,7 +1,7 @@
 {
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Base de règles symptômes → carences / déséquilibres nutritionnels",
-  "last_updated": "2026-06",
+  "last_updated": "2026-06-v1.2",
 
   "symptomes": [
     { "id": "gencives_douloureuses", "label": "Gencives douloureuses ou qui saignent", "categorie": "bouche" },
@@ -946,6 +946,142 @@
       "analyses": ["Vitamine D", "Ferritine", "NFS", "Zinc", "B12", "B9 (folates)", "Magnésium érythrocytaire", "CRP (inflammation)", "TSH"],
       "indication": "Bilan idéal si symptômes multiples",
       "remboursement": "Variable — certains non remboursés sans prescription justifiée"
+    }
+  ],
+
+  "contextes_medicaux": [
+    {
+      "id": "depression_anxiete",
+      "label": "Dépression ou anxiété chronique",
+      "emoji": "🧠",
+      "description": "Diagnostiquée ou suspectée",
+      "symptomes_confondus": ["fatigue_intense", "manque_motivation", "tristesse_fond", "brouillard_mental", "mauvais_sommeil", "irritabilite", "anxiete", "perte_appetit", "somnolence_journee"],
+      "coefficient_reduction": 0.6,
+      "carences_aggravees": ["magnesium", "omega3", "vitamine_d", "vitamine_b6", "zinc"],
+      "bonus_aggravation": 15,
+      "message_confond": "Peut être lié à la dépression/anxiété plutôt qu'à une carence.",
+      "message_aggrave": "La dépression aggrave les besoins en {carence} et peut aggraver cette carence.",
+      "conseil": "Mentionnez ce bilan à votre médecin — certaines carences aggravent les symptômes dépressifs et peuvent être corrigées en parallèle du traitement."
+    },
+    {
+      "id": "hypothyroidie",
+      "label": "Hypothyroïdie (suspectée ou diagnostiquée)",
+      "emoji": "🦋",
+      "description": "Thyroïde lente, traitement en cours ou bilan non fait",
+      "symptomes_confondus": ["fatigue_intense", "sensibilite_froid", "cheveux_cassants", "brouillard_mental", "manque_motivation", "mauvais_sommeil", "jambes_lourdes"],
+      "coefficient_reduction": 0.6,
+      "carences_aggravees": ["iode", "selenium", "fer", "vitamine_d", "zinc"],
+      "bonus_aggravation": 15,
+      "message_confond": "Peut être lié à la thyroïde plutôt qu'à une carence nutritionnelle.",
+      "message_aggrave": "L'hypothyroïdie peut aggraver ou masquer une carence en {carence}.",
+      "conseil": "Un bilan TSH est recommandé. Certaines carences (iode, sélénium) peuvent affecter la thyroïde.",
+      "bilan_recommande": "TSH, T3 libre, T4 libre"
+    },
+    {
+      "id": "anemie_connue",
+      "label": "Anémie connue ou suspectée",
+      "emoji": "🩸",
+      "description": "Fatigue, pâleur, essoufflement sans cause claire",
+      "symptomes_confondus": ["fatigue_intense", "palpitations", "brouillard_mental", "sensibilite_froid", "jambes_lourdes", "manque_motivation"],
+      "coefficient_reduction": 0.65,
+      "carences_aggravees": ["fer", "vitamine_b12", "vitamine_b9"],
+      "bonus_aggravation": 20,
+      "message_confond": "Typique de l'anémie — une prise de sang (NFS + ferritine) est nécessaire pour confirmer.",
+      "message_aggrave": "L'anémie est souvent causée par une carence en {carence}.",
+      "conseil": "NFS + ferritine + B12 avant toute supplémentation en fer.",
+      "bilan_recommande": "NFS, ferritine, B12",
+      "bilan_obligatoire": true
+    },
+    {
+      "id": "diabete",
+      "label": "Diabète ou résistance à l'insuline",
+      "emoji": "🍬",
+      "description": "Diabète type 1 ou 2, prédiabète, ou fringales/fatigue post-repas",
+      "symptomes_confondus": ["fatigue_intense", "brouillard_mental", "fringales_sucre", "somnolence_journee", "vision_trouble", "fourmillements"],
+      "coefficient_reduction": 0.6,
+      "carences_aggravees": ["magnesium", "zinc", "vitamine_d", "vitamine_b1"],
+      "bonus_aggravation": 15,
+      "message_confond": "Peut être lié à la glycémie plutôt qu'à une carence.",
+      "message_aggrave": "Le diabète augmente les pertes urinaires de {carence}.",
+      "conseil": "Si vous n'avez pas de suivi glycémique récent, un bilan HbA1c peut être utile."
+    },
+    {
+      "id": "troubles_digestifs",
+      "label": "Troubles digestifs chroniques",
+      "emoji": "🫃",
+      "description": "Colon irritable, Crohn, SIBO, reflux chronique",
+      "symptomes_confondus": ["fatigue_intense", "brouillard_mental", "digestion_lente", "transit_irregular", "nausees", "perte_appetit"],
+      "coefficient_reduction": 0.7,
+      "carences_aggravees": ["fer", "vitamine_b12", "vitamine_d", "zinc", "magnesium", "vitamine_b9", "probiotiques"],
+      "bonus_aggravation": 20,
+      "message_confond": "Peut être lié à vos troubles digestifs plutôt qu'à une carence isolée.",
+      "message_aggrave": "Vos troubles digestifs réduisent l'absorption de {carence} — la supplémentation est d'autant plus importante.",
+      "conseil": "Privilégiez les formes bien absorbées : bisglycinate pour le magnésium, méthylcobalamine pour la B12, bisglycinate pour le zinc."
+    },
+    {
+      "id": "stress_burnout",
+      "label": "Stress chronique ou burn-out",
+      "emoji": "🔥",
+      "description": "Surcharge prolongée, épuisement professionnel",
+      "symptomes_confondus": ["fatigue_intense", "mauvais_sommeil", "irritabilite", "brouillard_mental", "manque_motivation", "anxiete", "palpitations", "endormissement_difficile"],
+      "coefficient_reduction": 0.65,
+      "carences_aggravees": ["magnesium", "vitamine_c", "vitamine_b6", "zinc", "omega3"],
+      "bonus_aggravation": 15,
+      "message_confond": "Peut être lié au stress chronique plutôt qu'à une carence.",
+      "message_aggrave": "Le stress chronique épuise rapidement les réserves de {carence}.",
+      "conseil": "Le stress est un des plus grands consommateurs de magnésium et de vitamine C. Corriger ces carences peut aider à mieux gérer le stress."
+    },
+    {
+      "id": "menopause",
+      "label": "Ménopause ou périménopause",
+      "emoji": "🌡️",
+      "description": "Transition hormonale naturelle ou médicale",
+      "symptomes_confondus": ["mauvais_sommeil", "irritabilite", "fatigue_intense", "sautes_humeur", "sensibilite_froid", "peau_seche_generalisee", "cheveux_cassants"],
+      "coefficient_reduction": 0.65,
+      "carences_aggravees": ["vitamine_d", "magnesium", "omega3", "fer"],
+      "bonus_aggravation": 15,
+      "message_confond": "Fréquent lors de la ménopause — pas nécessairement une carence.",
+      "message_aggrave": "La ménopause augmente les besoins en {carence}.",
+      "conseil": "Vitamine D + magnésium + calcium sont essentiels pour la santé osseuse pendant cette période."
+    },
+    {
+      "id": "fatigue_chronique",
+      "label": "Syndrome de fatigue chronique (SFC)",
+      "emoji": "😴",
+      "description": "Fatigue invalidante depuis plus de 6 mois sans cause identifiée",
+      "symptomes_confondus": ["fatigue_intense", "brouillard_mental", "douleurs_articulaires", "mauvais_sommeil", "manque_motivation", "faiblesse_musculaire"],
+      "coefficient_reduction": 0.5,
+      "carences_aggravees": ["vitamine_d", "magnesium", "vitamine_b12", "omega3"],
+      "bonus_aggravation": 15,
+      "message_confond": "Peut faire partie du SFC — les carences seules ne l'expliquent pas entièrement.",
+      "message_aggrave": "Le SFC est souvent associé à une carence en {carence} qui aggrave les symptômes.",
+      "conseil": "Le SFC nécessite un suivi médical spécialisé. Corriger les carences associées peut améliorer la qualité de vie."
+    },
+    {
+      "id": "intolerance_alimentaire",
+      "label": "Allergie ou intolérance alimentaire",
+      "emoji": "🌾",
+      "description": "Gluten, lactose, histamine ou autre intolérance connue",
+      "symptomes_confondus": ["digestion_lente", "transit_irregular", "demangeaisons", "fatigue_intense", "brouillard_mental", "nausees"],
+      "coefficient_reduction": 0.65,
+      "carences_aggravees": ["fer", "vitamine_d", "vitamine_b9", "zinc", "magnesium"],
+      "bonus_aggravation": 15,
+      "message_confond": "Peut être une réaction à un aliment plutôt qu'une carence.",
+      "message_aggrave": "L'éviction de certains groupes alimentaires peut créer une carence en {carence}.",
+      "conseil": "Un régime d'éviction sans suivi peut créer des carences secondaires. Compensez systématiquement les nutriments des groupes évités."
+    },
+    {
+      "id": "infection_recente",
+      "label": "Infection ou maladie récente",
+      "emoji": "🤒",
+      "description": "COVID long, grippe, infection dans les 3 derniers mois",
+      "symptomes_confondus": ["fatigue_intense", "brouillard_mental", "manque_motivation", "douleurs_articulaires", "mauvais_sommeil"],
+      "coefficient_reduction": 0.7,
+      "carences_aggravees": ["vitamine_c", "zinc", "vitamine_d", "selenium", "probiotiques"],
+      "bonus_aggravation": 15,
+      "message_confond": "Peut être une séquelle de votre infection récente.",
+      "message_aggrave": "Les infections épuisent les réserves de {carence} — la supplémentation aide à la récupération.",
+      "conseil": "Le COVID long est associé à des carences en vitamine D, zinc et B12. Une supplémentation ciblée peut accélérer la récupération."
     }
   ],
 

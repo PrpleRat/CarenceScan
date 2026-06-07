@@ -35,6 +35,16 @@ struct CarenceCard: View {
                 }
             }
 
+            if !score.notesContexte.isEmpty {
+                contexteNotesSection
+            }
+
+            if !score.alertesProfil.isEmpty {
+                ForEach(Array(Set(score.alertesProfil)).sorted(), id: \.self) { alerte in
+                    AlerteBanner(message: alerte, style: .warning)
+                }
+            }
+
             Text("Aliments à privilégier : \(carence.alimentsCles.prefix(4).joined(separator: ", "))")
                 .font(.caption)
                 .foregroundStyle(CarenceColors.textSecondary)
@@ -57,5 +67,45 @@ struct CarenceCard: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(CarenceColors.border, lineWidth: 1)
         )
+    }
+
+    private var contexteNotesSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(score.notesContexte.groupedByContexte) { groupe in
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Text(groupe.emoji)
+                        Text(groupe.label)
+                            .font(.caption.bold())
+                    }
+
+                    ForEach(groupe.notesConfusion, id: \.id) { note in
+                        HStack(alignment: .top, spacing: 6) {
+                            Text("⚠️").font(.caption2)
+                            Text(note.message)
+                                .font(.caption2)
+                                .foregroundStyle(CarenceColors.textSecondary)
+                        }
+                        .padding(6)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(CarenceColors.warning.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                    }
+
+                    ForEach(groupe.notesAggravation, id: \.id) { note in
+                        HStack(alignment: .top, spacing: 6) {
+                            Text("↗️").font(.caption2)
+                            Text(note.message)
+                                .font(.caption2)
+                                .foregroundStyle(CarenceColors.textSecondary)
+                        }
+                        .padding(6)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(CarenceColors.primary.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                    }
+                }
+            }
+        }
     }
 }

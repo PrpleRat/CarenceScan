@@ -3,8 +3,6 @@ import SwiftUI
 struct QuestionnaireView: View {
     @EnvironmentObject private var vm: QuestionnaireViewModel
     @Environment(\.dismiss) private var dismiss
-    var onContinue: () -> Void = {}
-
     @State private var expandedCategories: Set<String> = Set(SymptomCategory.questionnaireOrder.map(\.rawValue))
     @State private var showMedicaments = false
 
@@ -72,10 +70,11 @@ struct QuestionnaireView: View {
                     ForEach(symptomes) { symptome in
                         SymptomeCard(
                             label: symptome.label,
-                            isSelected: vm.symptomesSelectionnes.contains(symptome.id)
-                        ) {
-                            vm.toggleSymptome(symptome.id)
-                        }
+                            isSelected: vm.isSymptomeSelected(symptome.id),
+                            frequence: vm.frequence(for: symptome.id),
+                            onToggle: { vm.toggleSymptome(symptome.id) },
+                            onFrequenceChange: { vm.setFrequence(symptomeId: symptome.id, frequence: $0) }
+                        )
                     }
                 }
                 .padding(.top, 8)

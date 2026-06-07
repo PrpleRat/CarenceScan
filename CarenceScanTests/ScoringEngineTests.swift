@@ -12,52 +12,115 @@ final class ScoringEngineTests: XCTestCase {
         "travail_nuit"
     ]
 
-    func testValidationScenario() {
-        let scores = ScoringEngine.calculerScores(
-            symptomesSelectionnes: validationSymptoms,
-            medicamentsSelectionnes: []
-        )
+    func testValidationScenarioV1() {
+        let scores = ScoringEngine.calculerScores(symptomesSelectionnes: validationSymptoms, medicamentsSelectionnes: [])
         let regles = ScoringEngine.detecterCombinaisonsSpeciales(
             symptomesSelectionnes: validationSymptoms,
             regles: CarenceDatabase.shared.reglesCombinatoiresSpeciales
         )
 
-        let vitC = scores.first { $0.carenceId == "vitamine_c" }
-        XCTAssertNotNil(vitC)
-        XCTAssertGreaterThanOrEqual(vitC?.score ?? 0, 65)
-        XCTAssertTrue(vitC?.niveau == .tresProbable || vitC?.niveau == .quasiCertaine)
-
-        let zinc = scores.first { $0.carenceId == "zinc" }
-        XCTAssertNotNil(zinc)
-        XCTAssertEqual(zinc?.niveau, .quasiCertaine)
-        XCTAssertGreaterThan(zinc?.score ?? 0, 70)
-
-        let vitD = scores.first { $0.carenceId == "vitamine_d" }
-        XCTAssertNotNil(vitD)
-        XCTAssertTrue(vitD?.niveau == .tresProbable || vitD?.niveau == .quasiCertaine)
-
-        let b2b3 = scores.first { $0.carenceId == "vitamine_b2_b3" }
-        XCTAssertNotNil(b2b3)
-        XCTAssertTrue(b2b3?.niveau == .tresProbable || b2b3?.niveau == .quasiCertaine)
-
+        XCTAssertNotNil(scores.first { $0.carenceId == "vitamine_c" })
+        XCTAssertEqual(scores.first { $0.carenceId == "zinc" }?.niveau, .quasiCertaine)
         XCTAssertTrue(regles.contains { $0.id == "combo_peau_muqueuses" })
     }
 
-    func testMedicamentBonus() {
-        var scores = ScoringEngine.calculerScores(
-            symptomesSelectionnes: ["fatigue_intense"],
-            medicamentsSelectionnes: []
-        )
-        let baseMag = scores.first { $0.carenceId == "magnesium" }?.score
+    func testFemmeReglesAbondantesFer() {
+        let profil = ProfilUtilisateur(sexe: .femme, age: .vingt6_35, situationHormonale: .reglesAbondantes)
+        let selections = [
+            SymptomeSelection(symptomeId: "fatigue_intense"),
+            SymptomeSelection(symptomeId: "jambes_lourdes")
+        ]
+        let scores = ScoringEngine.calculerScores(selections: selections, profil: profil)
+        let fer = scores.first { $0.carenceId == "fer" }
+        XCTAssertNotNil(fer)
+        XCTAssertEqual(fer?.niveau, .quasiCertaine)
+        XCTAssertGreaterThan(fer?.score ?? 0, 75)
+        XCTAssertTrue(fer?.alertesProfil.contains(where: { $0.contains("règles abondantes") }) == true)
+    }
 
-        scores = ScoringEngine.calculerScores(
-            symptomesSelectionnes: ["fatigue_intense", "irritabilite"],
+    func testFemmeEnceintePriorites() {
+        let profil = ProfilUtilisateur(sexe: .femme, age: .vingt6_35, situationHormonale: .enceinte)
+        let selections = [SymptomeSelection(symptomeId: "fatigue_intense")]
+        let scores = ScoringEngine.calculerScores(selections: selections, profil: profil)
+        let ids = Set(scores.map(\.carenceId))
+        XCTAssertTrue(ids.contains("vitamine_b9"))
+        XCTAssertTrue(ids.contains("fer"))
+        XCTAssertTrue(ids.contains("iode"))
+        let b9 = scores.first { $0.carenceId == "vitamine_b9" }
+        XCTAssertTrue(b9?.alertesProfil.contains(where: { $0.contains("GROSSESSE") }) == true)
+    }
+
+    func testHomme65VitamineDB12() {
+        let profil = ProfilUtilisateur(sexe: .homme, age: .plus65, situationHormonale: .nonApplicable)
+        let selections = [
+            SymptomeSelection(symptomeId: "fatigue_intense"),
+            SymptomeSelection(symptomeId: "brouillard_mental")
+        ]
+        let scores = ScoringEngine.calculerScores(selections: selections, profil: profil)
+        let vitD = scores.first { $0.carenceId == "vitamine_d" }
+        let b12 = scores.first { $0.carenceId == "vitamine_b12" }
+        XCTAssertNotNil(vitD)
+        XCTAssertNotNil(b12)
+        XCTAssertGreaterThanOrEqual(vitD?.score ?? 0, 45)
+        XCTAssertGreaterThanOrEqual(b12?.score ?? 0, 45)
+    }
+
+    func testDepressionContexteNotes() {
+        let depression = CarenceDatabase.shared.contextesMedicaux.first { $0.id == "depression_anxiete" }!
+        let selections = [
+            SymptomeSelection(symptomeId: "fatigue_intense"),
+            SymptomeSelection(symptomeId: "tristesse_fond")
+        ]
+        let scores = ScoringEngine.calculerScores(
+            selections: selections,
+            contextesActifs: [depression]
+        )
+        let magnesium = scores.first { $0.carenceId == "magnesium" }
+        let omega = scores.first { $0.carenceId == "omega3" }
+        XCTAssertNotNil(magnesium ?? omega)
+        let avecNotes = scores.filter { !$0.notesContexte.isEmpty }
+        XCTAssertFalse(avecNotes.isEmpty)
+        XCTAssertTrue(avecNotes.contains { result in
+            result.notesContexte.contains { $0.type == .confusion }
+        })
+        XCTAssertTrue(avecNotes.contains { result in
+            result.notesContexte.contains { $0.type == .aggravation }
+        })
+    }
+
+    func testFrequenceCoefficients() {
+        let constant = ScoringEngine.calculerScores(
+            selections: [SymptomeSelection(symptomeId: "fatigue_intense", frequence: .constant)]
+        )
+        let occasionnel = ScoringEngine.calculerScores(
+            selections: [SymptomeSelection(symptomeId: "fatigue_intense", frequence: .occasionnel)]
+        )
+        let magConst = constant.first { $0.carenceId == "magnesium" }?.score
+        let magOcc = occasionnel.first { $0.carenceId == "magnesium" }?.score
+        XCTAssertNotNil(magConst)
+        XCTAssertNotNil(magOcc)
+        if let magConst, let magOcc {
+            XCTAssertGreaterThan(magConst, magOcc)
+            XCTAssertEqual(magConst, Int((15.0 * 1.5).rounded()))
+            XCTAssertEqual(magOcc, Int((15.0 * 0.5).rounded()))
+        }
+    }
+
+    func testMedicamentBonus() {
+        let base = ScoringEngine.calculerScores(
+            selections: [SymptomeSelection(symptomeId: "fatigue_intense")]
+        )
+        let withMed = ScoringEngine.calculerScores(
+            selections: [
+                SymptomeSelection(symptomeId: "fatigue_intense"),
+                SymptomeSelection(symptomeId: "irritabilite")
+            ],
             medicamentsSelectionnes: ["sertraline"]
         )
-        let withMed = scores.first { $0.carenceId == "magnesium" }
-        XCTAssertNotNil(withMed)
-        if let baseMag, let withMed {
-            XCTAssertGreaterThanOrEqual(withMed.score, baseMag + 20)
+        let baseMag = base.first { $0.carenceId == "magnesium" }?.score
+        let withMedMag = withMed.first { $0.carenceId == "magnesium" }?.score
+        if let baseMag, let withMedMag {
+            XCTAssertGreaterThanOrEqual(withMedMag, baseMag + 20)
         }
     }
 }

@@ -10,6 +10,7 @@ struct CarenceDatabaseFile: Codable {
     let reglesCombinatoiresSpeciales: [RegleCombination]
     let soinsLocaux: [SoinLocal]
     let bilansSanguinsRecommandes: [BilanSanguin]
+    let contextesMedicaux: [ContexteMedical]
     let avertissements: Avertissements
 
     enum CodingKeys: String, CodingKey {
@@ -19,6 +20,35 @@ struct CarenceDatabaseFile: Codable {
         case reglesCombinatoiresSpeciales = "regles_combinatoires_speciales"
         case soinsLocaux = "soins_locaux"
         case bilansSanguinsRecommandes = "bilans_sanguins_recommandes"
+        case contextesMedicaux = "contextes_medicaux"
+    }
+}
+
+struct ContexteMedical: Codable, Identifiable, Hashable {
+    let id: String
+    let label: String
+    let emoji: String
+    let description: String
+    let symptomesConfondus: [String]
+    let coefficientReduction: Double
+    let carencesAggravees: [String]
+    let bonusAggravation: Int
+    let messageConfond: String
+    let messageAggrave: String
+    let conseil: String
+    let bilanRecommande: String?
+    let bilanObligatoire: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case id, label, emoji, description, conseil
+        case symptomesConfondus = "symptomes_confondus"
+        case coefficientReduction = "coefficient_reduction"
+        case carencesAggravees = "carences_aggravees"
+        case bonusAggravation = "bonus_aggravation"
+        case messageConfond = "message_confond"
+        case messageAggrave = "message_aggrave"
+        case bilanRecommande = "bilan_recommande"
+        case bilanObligatoire = "bilan_obligatoire"
     }
 }
 
@@ -155,12 +185,124 @@ struct ScoreResult: Identifiable, Codable, Hashable {
     let symptomesDetectes: [String]
     let alertes: [String]
     let bonusCombinations: Int
+    let notesContexte: [NoteContexte]
+    let alertesProfil: [String]
+
+    init(
+        carenceId: String,
+        score: Int,
+        niveau: ProbabilityLevel,
+        symptomesDetectes: [String],
+        alertes: [String],
+        bonusCombinations: Int,
+        notesContexte: [NoteContexte] = [],
+        alertesProfil: [String] = []
+    ) {
+        self.carenceId = carenceId
+        self.score = score
+        self.niveau = niveau
+        self.symptomesDetectes = symptomesDetectes
+        self.alertes = alertes
+        self.bonusCombinations = bonusCombinations
+        self.notesContexte = notesContexte
+        self.alertesProfil = alertesProfil
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case carenceId, score, niveau, symptomesDetectes, alertes, bonusCombinations, notesContexte, alertesProfil
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        carenceId = try c.decode(String.self, forKey: .carenceId)
+        score = try c.decode(Int.self, forKey: .score)
+        niveau = try c.decode(ProbabilityLevel.self, forKey: .niveau)
+        symptomesDetectes = try c.decode([String].self, forKey: .symptomesDetectes)
+        alertes = try c.decode([String].self, forKey: .alertes)
+        bonusCombinations = try c.decode(Int.self, forKey: .bonusCombinations)
+        notesContexte = try c.decodeIfPresent([NoteContexte].self, forKey: .notesContexte) ?? []
+        alertesProfil = try c.decodeIfPresent([String].self, forKey: .alertesProfil) ?? []
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(carenceId, forKey: .carenceId)
+        try c.encode(score, forKey: .score)
+        try c.encode(niveau, forKey: .niveau)
+        try c.encode(symptomesDetectes, forKey: .symptomesDetectes)
+        try c.encode(alertes, forKey: .alertes)
+        try c.encode(bonusCombinations, forKey: .bonusCombinations)
+        try c.encode(notesContexte, forKey: .notesContexte)
+        try c.encode(alertesProfil, forKey: .alertesProfil)
+    }
 }
 
 struct SavedResultsPayload: Codable {
     let date: Date
     let symptomesSelectionnes: [String]
+    let symptomeSelections: [SymptomeSelection]
     let medicamentsSelectionnes: [String]
+    let contextesSelectionnes: [String]
+    let profil: ProfilUtilisateur?
     let scores: [ScoreResult]
     let reglesDetectees: [String]
+    let conseilsContexte: [String]
+
+    init(
+        date: Date,
+        symptomeSelections: [SymptomeSelection],
+        medicamentsSelectionnes: [String],
+        contextesSelectionnes: [String],
+        profil: ProfilUtilisateur?,
+        scores: [ScoreResult],
+        reglesDetectees: [String],
+        conseilsContexte: [String]
+    ) {
+        self.date = date
+        self.symptomeSelections = symptomeSelections
+        self.symptomesSelectionnes = symptomeSelections.map(\.symptomeId)
+        self.medicamentsSelectionnes = medicamentsSelectionnes
+        self.contextesSelectionnes = contextesSelectionnes
+        self.profil = profil
+        self.scores = scores
+        self.reglesDetectees = reglesDetectees
+        self.conseilsContexte = conseilsContexte
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case date, scores, profil, reglesDetectees, conseilsContexte
+        case symptomesSelectionnes, symptomeSelections, medicamentsSelectionnes, contextesSelectionnes
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        date = try c.decode(Date.self, forKey: .date)
+        medicamentsSelectionnes = try c.decode([String].self, forKey: .medicamentsSelectionnes)
+        scores = try c.decode([ScoreResult].self, forKey: .scores)
+        reglesDetectees = try c.decode([String].self, forKey: .reglesDetectees)
+        profil = try c.decodeIfPresent(ProfilUtilisateur.self, forKey: .profil)
+        contextesSelectionnes = try c.decodeIfPresent([String].self, forKey: .contextesSelectionnes) ?? []
+        conseilsContexte = try c.decodeIfPresent([String].self, forKey: .conseilsContexte) ?? []
+        if let selections = try c.decodeIfPresent([SymptomeSelection].self, forKey: .symptomeSelections) {
+            symptomeSelections = selections
+            symptomesSelectionnes = selections.map(\.symptomeId)
+        } else {
+            let legacy = try c.decode([String].self, forKey: .symptomesSelectionnes)
+            symptomesSelectionnes = legacy
+            symptomeSelections = legacy.map { SymptomeSelection(symptomeId: $0) }
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(date, forKey: .date)
+        try c.encode(symptomesSelectionnes, forKey: .symptomesSelectionnes)
+        try c.encode(symptomeSelections, forKey: .symptomeSelections)
+        try c.encode(medicamentsSelectionnes, forKey: .medicamentsSelectionnes)
+        try c.encode(contextesSelectionnes, forKey: .contextesSelectionnes)
+        try c.encode(profil, forKey: .profil)
+        try c.encode(scores, forKey: .scores)
+        try c.encode(reglesDetectees, forKey: .reglesDetectees)
+        try c.encode(conseilsContexte, forKey: .conseilsContexte)
+    }
 }
