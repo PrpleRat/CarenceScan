@@ -46,7 +46,7 @@ struct QuestionnaireView: View {
         .navigationTitle("Symptômes")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $showMedicaments) {
-            MedicamentsView(onAnalyze: { showMedicaments = false })
+            MedicamentsView()
         }
     }
 

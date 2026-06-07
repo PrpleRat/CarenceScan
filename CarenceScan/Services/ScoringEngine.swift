@@ -125,7 +125,7 @@ enum ScoringEngine {
                 }
             }
 
-            var notesContexte = appliquerContextes(
+            let notesContexte = appliquerContextes(
                 score: &score,
                 selections: selections,
                 contextes: contextesActifs,
