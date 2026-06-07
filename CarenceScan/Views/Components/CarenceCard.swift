@@ -80,29 +80,19 @@ struct CarenceCard: View {
                     }
 
                     ForEach(groupe.notesConfusion, id: \.id) { note in
-                        HStack(alignment: .top, spacing: 6) {
-                            Text("⚠️").font(.caption2)
-                            Text(note.message)
-                                .font(.caption2)
-                                .foregroundStyle(CarenceColors.textSecondary)
-                        }
-                        .padding(6)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(CarenceColors.warning.opacity(0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        ContexteNoteView(
+                            icon: "⚠️",
+                            note: note,
+                            background: CarenceColors.warning.opacity(0.12)
+                        )
                     }
 
                     ForEach(groupe.notesAggravation, id: \.id) { note in
-                        HStack(alignment: .top, spacing: 6) {
-                            Text("↗️").font(.caption2)
-                            Text(note.message)
-                                .font(.caption2)
-                                .foregroundStyle(CarenceColors.textSecondary)
-                        }
-                        .padding(6)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(CarenceColors.primary.opacity(0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        ContexteNoteView(
+                            icon: "↗️",
+                            note: note,
+                            background: CarenceColors.primary.opacity(0.12)
+                        )
                     }
                 }
             }

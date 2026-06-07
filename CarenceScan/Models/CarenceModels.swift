@@ -24,6 +24,17 @@ struct CarenceDatabaseFile: Codable {
     }
 }
 
+struct ContexteSource: Codable, Hashable, Identifiable {
+    var id: String { url }
+    let label: String
+    let url: String
+}
+
+struct ExplicationAggraveDetail: Codable, Hashable {
+    let explication: String
+    let sources: [ContexteSource]
+}
+
 struct ContexteMedical: Codable, Identifiable, Hashable {
     let id: String
     let label: String
@@ -36,6 +47,9 @@ struct ContexteMedical: Codable, Identifiable, Hashable {
     let messageConfond: String
     let messageAggrave: String
     let conseil: String
+    let explicationConfond: String?
+    let sourcesConfond: [ContexteSource]
+    let explicationsAggrave: [String: ExplicationAggraveDetail]
     let bilanRecommande: String?
     let bilanObligatoire: Bool?
 
@@ -47,8 +61,31 @@ struct ContexteMedical: Codable, Identifiable, Hashable {
         case bonusAggravation = "bonus_aggravation"
         case messageConfond = "message_confond"
         case messageAggrave = "message_aggrave"
+        case explicationConfond = "explication_confond"
+        case sourcesConfond = "sources_confond"
+        case explicationsAggrave = "explications_aggrave"
         case bilanRecommande = "bilan_recommande"
         case bilanObligatoire = "bilan_obligatoire"
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        label = try c.decode(String.self, forKey: .label)
+        emoji = try c.decode(String.self, forKey: .emoji)
+        description = try c.decode(String.self, forKey: .description)
+        symptomesConfondus = try c.decode([String].self, forKey: .symptomesConfondus)
+        coefficientReduction = try c.decode(Double.self, forKey: .coefficientReduction)
+        carencesAggravees = try c.decode([String].self, forKey: .carencesAggravees)
+        bonusAggravation = try c.decode(Int.self, forKey: .bonusAggravation)
+        messageConfond = try c.decode(String.self, forKey: .messageConfond)
+        messageAggrave = try c.decode(String.self, forKey: .messageAggrave)
+        conseil = try c.decode(String.self, forKey: .conseil)
+        explicationConfond = try c.decodeIfPresent(String.self, forKey: .explicationConfond)
+        sourcesConfond = try c.decodeIfPresent([ContexteSource].self, forKey: .sourcesConfond) ?? []
+        explicationsAggrave = try c.decodeIfPresent([String: ExplicationAggraveDetail].self, forKey: .explicationsAggrave) ?? [:]
+        bilanRecommande = try c.decodeIfPresent(String.self, forKey: .bilanRecommande)
+        bilanObligatoire = try c.decodeIfPresent(Bool.self, forKey: .bilanObligatoire)
     }
 }
 

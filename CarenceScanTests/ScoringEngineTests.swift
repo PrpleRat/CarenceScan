@@ -86,6 +86,15 @@ final class ScoringEngineTests: XCTestCase {
         XCTAssertTrue(avecNotes.contains { result in
             result.notesContexte.contains { $0.type == .aggravation }
         })
+        if let magnesium {
+            let confusions = magnesium.notesContexte.filter { $0.type == .confusion }
+            XCTAssertEqual(confusions.count, 1, "Une seule note de confusion par contexte et par carence")
+            XCTAssertNotNil(confusions.first?.explication)
+            XCTAssertFalse(confusions.first?.sources.isEmpty ?? true)
+            let aggravations = magnesium.notesContexte.filter { $0.type == .aggravation }
+            XCTAssertNotNil(aggravations.first?.explication)
+            XCTAssertFalse(aggravations.first?.sources.isEmpty ?? true)
+        }
     }
 
     func testFrequenceCoefficients() {

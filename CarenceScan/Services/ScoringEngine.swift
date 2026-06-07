@@ -20,6 +20,52 @@ struct NoteContexte: Codable, Hashable, Identifiable {
     let contexteEmoji: String
     let message: String
     let symptomeId: String?
+    let explication: String?
+    let sources: [ContexteSource]
+
+    init(
+        type: NoteContexteType,
+        contexteLabel: String,
+        contexteEmoji: String,
+        message: String,
+        symptomeId: String? = nil,
+        explication: String? = nil,
+        sources: [ContexteSource] = []
+    ) {
+        self.type = type
+        self.contexteLabel = contexteLabel
+        self.contexteEmoji = contexteEmoji
+        self.message = message
+        self.symptomeId = symptomeId
+        self.explication = explication
+        self.sources = sources
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        type = try c.decode(NoteContexteType.self, forKey: .type)
+        contexteLabel = try c.decode(String.self, forKey: .contexteLabel)
+        contexteEmoji = try c.decode(String.self, forKey: .contexteEmoji)
+        message = try c.decode(String.self, forKey: .message)
+        symptomeId = try c.decodeIfPresent(String.self, forKey: .symptomeId)
+        explication = try c.decodeIfPresent(String.self, forKey: .explication)
+        sources = try c.decodeIfPresent([ContexteSource].self, forKey: .sources) ?? []
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case type, contexteLabel, contexteEmoji, message, symptomeId, explication, sources
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(type, forKey: .type)
+        try c.encode(contexteLabel, forKey: .contexteLabel)
+        try c.encode(contexteEmoji, forKey: .contexteEmoji)
+        try c.encode(message, forKey: .message)
+        try c.encodeIfPresent(symptomeId, forKey: .symptomeId)
+        try c.encodeIfPresent(explication, forKey: .explication)
+        try c.encode(sources, forKey: .sources)
+    }
 }
 
 struct NoteContexteGroupe: Identifiable {
@@ -290,29 +336,36 @@ enum ScoringEngine {
         var notes: [NoteContexte] = []
 
         for contexte in contextes {
+            var noteConfusionAjoutee = false
             for selection in selections where contexte.symptomesConfondus.contains(selection.symptomeId) {
-                let scoreBase = Double(carence.scoreParSymptome[selection.symptomeId] ?? 0)
+                guard let scoreSymptome = carence.scoreParSymptome[selection.symptomeId] else { continue }
+                let scoreBase = Double(scoreSymptome)
                 let reduction = scoreBase * selection.frequence.coefficient * (1 - contexte.coefficientReduction)
                 score -= reduction
 
+                guard !noteConfusionAjoutee else { continue }
+                noteConfusionAjoutee = true
                 notes.append(NoteContexte(
                     type: .confusion,
                     contexteLabel: contexte.label,
                     contexteEmoji: contexte.emoji,
                     message: contexte.messageConfond,
-                    symptomeId: selection.symptomeId
+                    explication: contexte.explicationConfond,
+                    sources: contexte.sourcesConfond
                 ))
             }
 
             if contexte.carencesAggravees.contains(carence.id) {
                 score += Double(contexte.bonusAggravation)
                 let message = contexte.messageAggrave.replacingOccurrences(of: "{carence}", with: carence.nom)
+                let detail = contexte.explicationsAggrave[carence.id]
                 notes.append(NoteContexte(
                     type: .aggravation,
                     contexteLabel: contexte.label,
                     contexteEmoji: contexte.emoji,
                     message: message,
-                    symptomeId: nil
+                    explication: detail?.explication,
+                    sources: detail?.sources ?? []
                 ))
             }
         }
