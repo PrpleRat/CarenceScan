@@ -97,6 +97,11 @@ cp "$APP_SRC" "${OUT_DIR}/app.mobileprovision"
 B64_P12=$(base64 -i "$P12_PATH" | tr -d '\n')
 B64_APP=$(base64 -i "${OUT_DIR}/app.mobileprovision" | tr -d '\n')
 
+CERT_APPLE_ID=""
+if [ -f "$FASTLANE_LOG" ]; then
+  CERT_APPLE_ID=$(grep "Certificat Apple ID:" "$FASTLANE_LOG" | tail -1 | sed -E 's/.*Certificat Apple ID: *//')
+fi
+
 cat > "${OUT_DIR}/GITHUB_SECRETS.txt" <<EOF
 # Secrets GitHub (Settings → Actions → Secrets)
 
@@ -104,6 +109,7 @@ IOS_DISTRIBUTION_CERTIFICATE_PASSWORD=$P12_PASSWORD
 KEYCHAIN_PASSWORD=$P12_PASSWORD
 
 IOS_DISTRIBUTION_CERTIFICATE_BASE64 → IOS_DISTRIBUTION_CERTIFICATE_BASE64.txt
+IOS_DISTRIBUTION_CERTIFICATE_ID → IOS_DISTRIBUTION_CERTIFICATE_ID.txt (optionnel, accélère refresh profil)
 IOS_PROFILE_APP_BASE64 → IOS_PROFILE_APP_BASE64.txt
 EOF
 
@@ -111,5 +117,8 @@ printf '%s' "$B64_P12" > "${OUT_DIR}/IOS_DISTRIBUTION_CERTIFICATE_BASE64.txt"
 printf '%s' "$B64_APP" > "${OUT_DIR}/IOS_PROFILE_APP_BASE64.txt"
 printf '%s' "$P12_PASSWORD" > "${OUT_DIR}/IOS_DISTRIBUTION_CERTIFICATE_PASSWORD.txt"
 printf '%s' "$P12_PASSWORD" > "${OUT_DIR}/KEYCHAIN_PASSWORD.txt"
+if [ -n "$CERT_APPLE_ID" ]; then
+  printf '%s' "$CERT_APPLE_ID" > "${OUT_DIR}/IOS_DISTRIBUTION_CERTIFICATE_ID.txt"
+fi
 
 echo "Bootstrap CarenceScan terminé — artifact signing-files"

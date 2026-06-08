@@ -65,6 +65,7 @@ jobs:
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
           KEYCHAIN_PATH: ${{ env.KEYCHAIN_PATH }}
+          IOS_DISTRIBUTION_CERTIFICATE_ID: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_ID }}
         run: |
           if [ -z "$ASC_KEY_ID" ] || [ -z "$ASC_ISSUER_ID" ] || [ -z "$ASC_PRIVATE_KEY" ]; then
             echo "::error::Secrets ASC_* requis pour le profil"
