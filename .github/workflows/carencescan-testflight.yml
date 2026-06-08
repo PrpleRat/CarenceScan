@@ -34,8 +34,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Normaliser fins de ligne scripts CI
-        run: sed -i '' $'s/\r$//' ci/*.sh
+      - name: Préparer scripts CI (LF, compatible Windows)
+        run: |
+          for f in ci/*.sh; do tr -d '\r' < "$f" > "$f.tmp" && mv "$f.tmp" "$f"; done
 
       - name: Sélectionner Xcode
         uses: maxim-lobanov/setup-xcode@v1
@@ -45,7 +46,7 @@ jobs:
       - name: Vérifier la structure
         run: |
           test -f project.yml
-          test -f ci/install-signing.sh
+          test -f ci/install_signing.py
           test -f CarenceScan/Resources/carences_base.json
           bash ci/verify-no-critical-entitlements.sh
           xcodebuild -version
@@ -55,7 +56,7 @@ jobs:
           IOS_DISTRIBUTION_CERTIFICATE_BASE64: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_BASE64 }}
           IOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-        run: bash ci/install-signing.sh
+        run: python3 ci/install_signing.py
 
       - name: Régénérer profil App Store (API Apple)
         env:

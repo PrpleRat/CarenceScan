@@ -2,7 +2,7 @@
 # Installe le certificat Distribution depuis les secrets (réutilisé, pas de nouveau cert).
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="${GITHUB_WORKSPACE:?GITHUB_WORKSPACE requis}/ci"
 # shellcheck source=check-signing-secrets.sh
 bash "$SCRIPT_DIR/check-signing-secrets.sh"
 
