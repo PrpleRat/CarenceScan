@@ -1,0 +1,47 @@
+# Génère certificat Distribution + profil App Store via l'API Apple (sans Mac local).
+# Prérequis : secrets ASC_* + App ID com.carencescan.app sur developer.apple.com
+
+name: CarenceScan — Bootstrap signing (sans Mac)
+
+on:
+  workflow_dispatch:
+
+env:
+  BUNDLE_ID_APP: com.carencescan.app
+
+jobs:
+  bootstrap:
+    name: Créer certificat + profil
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Vérifier secrets API
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          if [ -z "$ASC_KEY_ID" ] || [ -z "$ASC_ISSUER_ID" ] || [ -z "$ASC_PRIVATE_KEY" ]; then
+            echo "::error::Ajoute d'abord ASC_KEY_ID, ASC_ISSUER_ID, ASC_PRIVATE_KEY"
+            exit 1
+          fi
+
+      - name: Bootstrap (Fastlane + API Apple)
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: bash ci/bootstrap-signing-api.sh
+
+      - name: Upload fichiers pour secrets GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: signing-files
+          path: output/signing-bundle/**
+          retention-days: 5
+          if-no-files-found: error

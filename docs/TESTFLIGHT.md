@@ -14,8 +14,19 @@
 | `ASC_KEY_ID` | ID de la clé API App Store Connect |
 | `ASC_ISSUER_ID` | Issuer ID (Users and Access → Integrations) |
 | `ASC_PRIVATE_KEY` | Contenu complet du fichier `.p8` (copier-coller) |
+| `IOS_DISTRIBUTION_CERTIFICATE_BASE64` | Certificat `.p12` (bootstrap, **réutilisé**) |
+| `IOS_DISTRIBUTION_CERTIFICATE_PASSWORD` | Mot de passe du `.p12` |
+| `KEYCHAIN_PASSWORD` | Mot de passe trousseau CI |
+
+**Important :** un seul certificat **Apple Distribution** suffit pour **toutes** tes apps. Le workflow **réutilise** le `.p12` et ne régénère que le **profil** App Store à chaque build.
 
 Créer la clé API : [App Store Connect → Users and Access → Integrations → App Store Connect API](https://appstoreconnect.apple.com/access/integrations/api)
+
+### Première fois — Bootstrap (sans Mac)
+
+1. Ajouter les 3 secrets `ASC_*`
+2. **Actions** → **CarenceScan — Bootstrap signing (sans Mac)** → **Run workflow** (ou utiliser le `.p12` d'un autre repo)
+3. Copier les 3 secrets certificat dans ce repo GitHub
 
 ## Apple Developer — App ID
 

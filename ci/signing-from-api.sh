@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# DÉPRÉCIÉ pour TestFlight CI — recréait un certificat à chaque run.
+# Utiliser install-signing.sh + refresh-profiles-api.sh (workflow TestFlight).
 set -euo pipefail
 : "${ASC_KEY_ID:?}"
 : "${ASC_ISSUER_ID:?}"

@@ -33,6 +33,9 @@ write_release_xcconfig() {
   mkdir -p ci
   cat > ci/Release-App.xcconfig <<EOF
 // Généré par CI — ne pas committer
+CODE_SIGN_STYLE = Manual
+CODE_SIGN_IDENTITY = Apple Distribution
+DEVELOPMENT_TEAM = 4N92TKQ397
 PROVISIONING_PROFILE_SPECIFIER = ${app_uuid}
 EOF
   cat > ExportOptions-ci.plist <<EOF

@@ -85,4 +85,31 @@ platform :ios do
     )
     UI.success("CI signing OK — #{lane_context[SharedValues::SIGH_NAME]}")
   end
+
+  desc "Régénère le profil App Store lié au certificat du trousseau CI"
+  lane :refresh_profiles do
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_content: ENV.fetch("ASC_PRIVATE_KEY"),
+      is_key_content_base64: false
+    )
+
+    cert_id = ENV.fetch("DISTRIBUTION_CERT_ID")
+    profiles_path = ENV.fetch("PROFILES_PATH")
+
+    sigh(
+      api_key: api_key,
+      app_identifier: "com.carencescan.app",
+      team_id: "4N92TKQ397",
+      platform: "ios",
+      adhoc: false,
+      skip_install: true,
+      force: true,
+      output_path: profiles_path,
+      filename: "app.mobileprovision",
+      cert_id: cert_id
+    )
+    UI.success("Profil app régénéré avec cert_id #{cert_id}")
+  end
 end
