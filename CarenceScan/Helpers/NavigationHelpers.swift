@@ -11,6 +11,11 @@ enum NavigationHelpers {
             .compactMap { $0 as? UIWindowScene }
         for scene in scenes {
             for window in scene.windows where window.isKeyWindow {
+                if let tab = window.rootViewController as? UITabBarController,
+                   let selected = tab.selectedViewController {
+                    return (selected as? UINavigationController)
+                        ?? findNavigationController(in: selected)
+                }
                 return findNavigationController(in: window.rootViewController)
             }
         }

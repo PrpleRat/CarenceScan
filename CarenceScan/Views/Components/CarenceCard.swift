@@ -3,9 +3,14 @@ import SwiftUI
 struct CarenceCard: View {
     let score: ScoreResult
     let carence: Carence
+    var actionCategory: ActionCategory?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            if let actionCategory {
+                ActionCategoryBadge(categorie: actionCategory)
+            }
+
             HStack {
                 Text(carence.nom)
                     .font(.headline)

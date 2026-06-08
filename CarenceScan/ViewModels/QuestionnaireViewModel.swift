@@ -138,6 +138,7 @@ final class QuestionnaireViewModel: ObservableObject {
         )
         savedPayload = payload
         ResultsStorage.save(payload)
+        ResultsStorage.clearDraft()
         SymptomJournalStorage.appendBilanHistory(payload)
         SymptomTrackerViewModel.shared.syncTrackedSymptoms(from: symptomeSelections)
     }

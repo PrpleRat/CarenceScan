@@ -9,7 +9,10 @@ struct ProfilView: View {
     @State private var showQuestionnaire = false
 
     var body: some View {
-        ScrollView {
+        VStack(spacing: 0) {
+            QuestionnaireProgressBar(currentStep: .profil)
+
+            ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Votre profil")
@@ -96,6 +99,7 @@ struct ProfilView: View {
                 }
             }
             .padding(20)
+            }
         }
         .background(CarenceColors.background.ignoresSafeArea())
         .navigationTitle("Profil")

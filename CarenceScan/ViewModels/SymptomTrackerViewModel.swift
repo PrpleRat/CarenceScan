@@ -72,6 +72,7 @@ final class SymptomTrackerViewModel: ObservableObject {
                     hour: settings.reminderHour,
                     minute: settings.reminderMinute
                 )
+                await SmartNotificationService.evaluateAndSchedule(tracker: self)
             } else {
                 settings.notificationsEnabled = false
                 persistSettings()

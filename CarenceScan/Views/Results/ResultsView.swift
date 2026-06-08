@@ -3,6 +3,7 @@ import SwiftUI
 struct ResultsView: View {
     @EnvironmentObject private var vm: QuestionnaireViewModel
     @EnvironmentObject private var tracker: SymptomTrackerViewModel
+    @EnvironmentObject private var tabRouter: AppTabRouter
     @Environment(\.dismiss) private var dismiss
     var onRestart: () -> Void = {}
 
@@ -66,11 +67,17 @@ struct ResultsView: View {
 
                 if let payload {
                     ExportButton(payload: payload)
+                    DoctorExportButton(payload: payload)
                 }
 
-                if ResultsStorage.hasSavedResults {
-                    suiviQuickLinks
+                NavigationLink {
+                    GlossaireView()
+                } label: {
+                    Label("Glossaire médical", systemImage: "book.closed")
+                        .frame(maxWidth: .infinity)
                 }
+                .buttonStyle(.bordered)
+                .tint(CarenceColors.primary)
 
                 Button("Refaire le test") {
                     onRestart()
@@ -173,7 +180,11 @@ struct ResultsView: View {
 
             ForEach(vm.scores) { score in
                 if let carence = CarenceDatabase.carence(for: score.carenceId) {
-                    CarenceCard(score: score, carence: carence)
+                    CarenceCard(
+                        score: score,
+                        carence: carence,
+                        actionCategory: vm.categorieAction(pour: score.carenceId)
+                    )
                 }
             }
         }
@@ -260,42 +271,6 @@ struct ResultsView: View {
         }
     }
 
-    private var suiviQuickLinks: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Suivi quotidien")
-                .font(.headline)
-                .foregroundStyle(CarenceColors.textPrimary)
-            Text("Notez vos symptômes chaque jour pour voir s'ils s'améliorent.")
-                .font(.caption)
-                .foregroundStyle(CarenceColors.textSecondary)
-
-            NavigationLink {
-                DailyCheckInView()
-            } label: {
-                Label("Check-in du jour", systemImage: "calendar.badge.checkmark")
-            }
-            .tint(CarenceColors.primary)
-
-            NavigationLink {
-                SymptomEvolutionView()
-            } label: {
-                Label("Voir l'évolution", systemImage: "chart.bar.fill")
-            }
-            .tint(CarenceColors.primary)
-
-            NavigationLink {
-                TrackingSettingsView()
-            } label: {
-                Label("Activer les rappels", systemImage: "bell.badge")
-            }
-            .tint(CarenceColors.primary)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(CarenceColors.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-
     private var emptyState: some View {
         VStack(spacing: 12) {
             Image(systemName: "doc.text.magnifyingglass")
@@ -315,5 +290,6 @@ struct ResultsView: View {
         ResultsView()
             .environmentObject(QuestionnaireViewModel())
             .environmentObject(SymptomTrackerViewModel.shared)
+            .environmentObject(AppTabRouter())
     }
 }

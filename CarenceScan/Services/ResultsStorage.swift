@@ -57,6 +57,10 @@ enum ResultsStorage {
         guard let data = UserDefaults.standard.data(forKey: AppConstants.questionnaireStorageKey) else { return nil }
         return try? decoder.decode(QuestionnaireDraft.self, from: data)
     }
+
+    static func clearDraft() {
+        UserDefaults.standard.removeObject(forKey: AppConstants.questionnaireStorageKey)
+    }
 }
 
 struct QuestionnaireDraft: Codable {

@@ -2,10 +2,12 @@ import SwiftUI
 
 struct ContextesMedicauxView: View {
     @EnvironmentObject private var vm: QuestionnaireViewModel
-    @State private var showResults = false
+    @EnvironmentObject private var tabRouter: AppTabRouter
 
     var body: some View {
         VStack(spacing: 0) {
+            QuestionnaireProgressBar(currentStep: .contextes)
+
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     Text("Contexte médical")
@@ -53,12 +55,6 @@ struct ContextesMedicauxView: View {
         .background(CarenceColors.background.ignoresSafeArea())
         .navigationTitle("Contextes")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(isPresented: $showResults) {
-            ResultsView(onRestart: {
-                vm.resetQuestionnaire()
-                showResults = false
-            })
-        }
     }
 
     private var bottomBar: some View {
@@ -66,7 +62,8 @@ struct ContextesMedicauxView: View {
             Divider()
             Button {
                 vm.analyser()
-                showResults = true
+                tabRouter.openBilanSummary()
+                NavigationHelpers.popToRoot()
             } label: {
                 Text("Voir mon bilan")
                     .frame(maxWidth: .infinity)
@@ -123,5 +120,6 @@ struct ContexteCard: View {
     NavigationStack {
         ContextesMedicauxView()
             .environmentObject(QuestionnaireViewModel())
+            .environmentObject(AppTabRouter())
     }
 }

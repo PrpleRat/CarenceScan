@@ -3,8 +3,9 @@ import SwiftUI
 struct ListeCoursesView: View {
     let scores: [ScoreResult]
     let symptomesDetectes: [String]
+    var showHomeButton: Bool = true
 
-    @State private var section: ListeCategorie = .pharmacie
+    @State private var section: ListeCategorie = .supermarche
     @State private var checkedIds: Set<String> = ListeCoursesStorage.loadCheckedIds()
     @State private var shareText: ShareTextItem?
 
@@ -15,14 +16,28 @@ struct ListeCoursesView: View {
         )
     }
 
+    private var allItems: [ListeItem] { liste.pharmacie + liste.supermarche }
+    private var totalCount: Int { allItems.count }
+    private var checkedCount: Int { allItems.filter { checkedIds.contains($0.id) }.count }
+    private var remainingCount: Int { totalCount - checkedCount }
+    private var progress: Double {
+        guard totalCount > 0 else { return 0 }
+        return Double(checkedCount) / Double(totalCount)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
+            livingStatsHeader
+
+            categoryLegend
+
             Picker("Section", selection: $section) {
+                Text("🥗 Alimentation").tag(ListeCategorie.supermarche)
                 Text("💊 Pharmacie").tag(ListeCategorie.pharmacie)
-                Text("🛒 Supermarché").tag(ListeCategorie.supermarche)
             }
             .pickerStyle(.segmented)
-            .padding()
+            .padding(.horizontal)
+            .padding(.bottom, 8)
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
@@ -41,13 +56,15 @@ struct ListeCoursesView: View {
         .navigationTitle("Ma liste de courses")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    NavigationHelpers.popToRoot()
-                } label: {
-                    Label("Accueil", systemImage: "house.fill")
+            if showHomeButton {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        NavigationHelpers.popToRoot()
+                    } label: {
+                        Label("Accueil", systemImage: "house.fill")
+                    }
+                    .accessibilityLabel("Retour à l'accueil")
                 }
-                .accessibilityLabel("Retour à l'accueil")
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -63,59 +80,141 @@ struct ListeCoursesView: View {
         }
     }
 
-    private var pharmacieContent: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Compléments alimentaires recommandés")
-                .font(.subheadline)
+    private var livingStatsHeader: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Liste vivante")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(CarenceColors.primary)
+                    Text("\(checkedCount) coché\(checkedCount > 1 ? "s" : "") · \(remainingCount) restant\(remainingCount > 1 ? "s" : "")")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(CarenceColors.textPrimary)
+                }
+                Spacer()
+                Text("\(Int(progress * 100))%")
+                    .font(.title3.bold())
+                    .foregroundStyle(CarenceColors.primary)
+            }
+            ProgressView(value: progress)
+                .tint(CarenceColors.primary)
+            Text("Semaine du \(semaineCourante)")
+                .font(.caption2)
                 .foregroundStyle(CarenceColors.textSecondary)
+        }
+        .padding(14)
+        .background(CarenceColors.surface)
+    }
 
+    private var semaineCourante: String {
+        let cal = Calendar.current
+        let start = cal.dateInterval(of: .weekOfYear, for: Date())?.start ?? Date()
+        return start.formatted(date: .abbreviated, time: .omitted)
+    }
+
+    private var categoryLegend: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ActionCategoryBadge(categorie: .alimentation)
+                ActionCategoryBadge(categorie: .pharmacieOrdonnance)
+                ActionCategoryBadge(categorie: .urgence)
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+        }
+    }
+
+    private var pharmacieContent: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            sectionIntro(
+                categorie: .urgence,
+                titre: "Urgence — ne pas agir seul",
+                detail: "Ces produits nécessitent un avis médical ou un bilan avant achat."
+            )
             groupeItems(
-                titre: "⚠️ À ne pas acheter seul",
-                items: liste.pharmacie.filter { $0.nom.contains("⚠️") }
+                items: liste.pharmacie.filter { $0.nom.contains("⚠️") },
+                categorie: .urgence
+            )
+
+            sectionIntro(
+                categorie: .pharmacieOrdonnance,
+                titre: "Pharmacie sur ordonnance",
+                detail: "Compléments à valider avec votre médecin ou pharmacien."
             )
             groupeItems(
                 titre: "Semaine 1 — Priorité haute",
-                items: liste.pharmacie.filter { $0.urgence == .urgent && !$0.nom.contains("⚠️") }
+                items: liste.pharmacie.filter { $0.urgence == .urgent && !$0.nom.contains("⚠️") },
+                categorie: .pharmacieOrdonnance
             )
             groupeItems(
                 titre: "Semaine 2 — Compléter",
-                items: liste.pharmacie.filter { $0.urgence == .important }
+                items: liste.pharmacie.filter { $0.urgence == .important },
+                categorie: .pharmacieOrdonnance
             )
             groupeItems(
                 titre: "Soins locaux & compléments",
-                items: liste.pharmacie.filter { $0.urgence == .complementaire }
+                items: liste.pharmacie.filter { $0.urgence == .complementaire },
+                categorie: .pharmacieOrdonnance
             )
         }
     }
 
     private var supermarcheContent: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Aliments à intégrer dans votre alimentation")
-                .font(.subheadline)
-                .foregroundStyle(CarenceColors.textSecondary)
+            sectionIntro(
+                categorie: .alimentation,
+                titre: "Alimentation — votre premier levier",
+                detail: "Intégrez ces aliments dans vos repas avant d'envisager des compléments."
+            )
 
             ForEach(grouperSupermarche(liste.supermarche), id: \.categorie) { groupe in
-                groupeItems(titre: groupe.categorie, items: groupe.items)
+                groupeItems(titre: groupe.categorie, items: groupe.items, categorie: .alimentation)
             }
         }
     }
 
-    private func groupeItems(titre: String, items: [ListeItem]) -> some View {
+    private func sectionIntro(categorie: ActionCategory, titre: String, detail: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ActionCategoryBadge(categorie: categorie)
+            Text(titre)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(categorie.color)
+            Text(detail)
+                .font(.caption)
+                .foregroundStyle(CarenceColors.textSecondary)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(categorie.background)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(categorie.color.opacity(0.25), lineWidth: 1)
+        )
+    }
+
+    private func groupeItems(
+        titre: String? = nil,
+        items: [ListeItem],
+        categorie: ActionCategory
+    ) -> some View {
         Group {
             if !items.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(titre)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(CarenceColors.textSecondary)
+                    if let titre {
+                        Text(titre)
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(categorie.color)
+                    }
                     ForEach(items) { item in
-                        listeItemRow(item)
+                        listeItemRow(item, categorie: categorie)
                     }
                 }
             }
         }
     }
 
-    private func listeItemRow(_ item: ListeItem) -> some View {
+    private func listeItemRow(_ item: ListeItem, categorie: ActionCategory) -> some View {
         Button {
             toggleChecked(item.id)
         } label: {
@@ -146,11 +245,11 @@ struct ListeCoursesView: View {
                 Spacer()
             }
             .padding(12)
-            .background(CarenceColors.surface)
+            .background(categorie.background)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(CarenceColors.border, lineWidth: 1)
+                    .stroke(categorie.color.opacity(0.2), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -215,9 +314,4 @@ struct ListeCoursesView: View {
         }
         return "Autres"
     }
-}
-
-struct ShareTextItem: Identifiable {
-    let id = UUID()
-    let text: String
 }

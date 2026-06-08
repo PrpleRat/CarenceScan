@@ -12,11 +12,13 @@ struct QuestionnaireView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            QuestionnaireProgressBar(currentStep: .symptomes)
+
             ProgressView(value: progress)
                 .tint(CarenceColors.primary)
                 .padding(.horizontal)
-                .padding(.top, 8)
-                .accessibilityLabel("Progression du questionnaire")
+                .padding(.top, 4)
+                .accessibilityLabel("Progression des symptômes sélectionnés")
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {

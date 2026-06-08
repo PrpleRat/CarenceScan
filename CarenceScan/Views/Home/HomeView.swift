@@ -2,12 +2,11 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject private var vm: QuestionnaireViewModel
-    @EnvironmentObject private var tracker: SymptomTrackerViewModel
+    @EnvironmentObject private var tabRouter: AppTabRouter
     @State private var showProfil = false
-    @State private var showResults = false
-    @State private var showDailyCheckIn = false
-    @State private var showEvolution = false
-    @State private var showListeCourses = false
+    @State private var showQuestionnaire = false
+    @State private var showMedicaments = false
+    @State private var showContextes = false
 
     var body: some View {
         ScrollView {
@@ -26,21 +25,21 @@ struct HomeView: View {
                         .foregroundStyle(CarenceColors.textSecondary)
                 }
 
+                ResumeBannerView { etape in
+                    resumeVers(etape)
+                }
+
                 Button {
                     vm.restoreDraftIfNeeded()
                     showProfil = true
                 } label: {
-                    Text("Commencer le questionnaire")
+                    Text(ResultsStorage.hasSavedResults ? "Refaire le questionnaire" : "Commencer le questionnaire")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .tint(CarenceColors.primary)
                 .accessibilityLabel("Commencer le questionnaire")
-
-                if ResultsStorage.hasSavedResults || !tracker.trackedSymptomeIds.isEmpty {
-                    suiviSection
-                }
 
                 if ResultsStorage.hasSavedResults {
                     accesRapidesSection
@@ -50,6 +49,15 @@ struct HomeView: View {
                     SymptomesEncyclopedieView()
                 } label: {
                     Label("Encyclopédie des symptômes", systemImage: "book.pages")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(CarenceColors.primary)
+
+                NavigationLink {
+                    GlossaireView()
+                } label: {
+                    Label("Glossaire médical", systemImage: "book.closed")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
@@ -67,38 +75,29 @@ struct HomeView: View {
         .navigationDestination(isPresented: $showProfil) {
             ProfilView()
         }
-        .navigationDestination(isPresented: $showResults) {
-            ResultsView(onRestart: {
-                vm.resetQuestionnaire()
-                showResults = false
-                showProfil = true
-            })
+        .navigationDestination(isPresented: $showQuestionnaire) {
+            QuestionnaireView()
         }
-        .navigationDestination(isPresented: $showDailyCheckIn) {
-            DailyCheckInView()
+        .navigationDestination(isPresented: $showMedicaments) {
+            MedicamentsView()
         }
-        .navigationDestination(isPresented: $showEvolution) {
-            SymptomEvolutionView()
+        .navigationDestination(isPresented: $showContextes) {
+            ContextesMedicauxView()
         }
-        .navigationDestination(isPresented: $showListeCourses) {
-            ListeCoursesView(
-                scores: vm.scores.isEmpty ? (ResultsStorage.load()?.scores ?? []) : vm.scores,
-                symptomesDetectes: vm.symptomesSelectionnes.isEmpty
-                    ? (ResultsStorage.load()?.symptomeSelections.map(\.symptomeId) ?? [])
-                    : Array(vm.symptomesSelectionnes)
-            )
-        }
-        .onChange(of: tracker.openDailyCheckIn) { _, open in
-            if open {
-                showDailyCheckIn = true
-                tracker.openDailyCheckIn = false
-            }
-        }
-        .onAppear {
-            if tracker.openDailyCheckIn {
-                showDailyCheckIn = true
-                tracker.openDailyCheckIn = false
-            }
+    }
+
+    private func resumeVers(_ etape: QuestionnaireStep) {
+        switch etape {
+        case .profil:
+            showProfil = true
+        case .symptomes:
+            showQuestionnaire = true
+        case .medicaments:
+            showMedicaments = true
+        case .contextes:
+            showContextes = true
+        case .resultats:
+            tabRouter.openBilanSummary()
         }
     }
 
@@ -109,62 +108,27 @@ struct HomeView: View {
                 .foregroundStyle(CarenceColors.textPrimary)
 
             Button {
-                vm.loadSavedResults()
-                showResults = true
+                tabRouter.openBilanSummary()
             } label: {
-                Label("Voir mes carences", systemImage: "list.clipboard.fill")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .buttonStyle(.bordered)
-            .tint(CarenceColors.primary)
-
-            Button {
-                vm.loadSavedResults()
-                showListeCourses = true
-            } label: {
-                Label("Ma liste de courses", systemImage: "cart.fill")
+                Label("Mon résumé de bilan", systemImage: "sparkles")
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .buttonStyle(.borderedProminent)
             .tint(CarenceColors.primary)
-        }
-        .padding(14)
-        .background(CarenceColors.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(CarenceColors.border, lineWidth: 1)
-        )
-    }
-
-    private var suiviSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Suivi dans le temps")
-                .font(.headline)
-                .foregroundStyle(CarenceColors.textPrimary)
 
             Button {
-                showDailyCheckIn = true
+                tabRouter.openCourses()
             } label: {
-                Label("Check-in du jour", systemImage: "calendar.badge.checkmark")
+                Label("Ma liste de courses", systemImage: "cart.fill")
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .buttonStyle(.bordered)
             .tint(CarenceColors.primary)
 
             Button {
-                showEvolution = true
+                tabRouter.openSuivi()
             } label: {
-                Label("Voir l'évolution", systemImage: "chart.bar.fill")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .buttonStyle(.bordered)
-            .tint(CarenceColors.primary)
-
-            NavigationLink {
-                TrackingSettingsView()
-            } label: {
-                Label("Rappels quotidiens", systemImage: "bell.badge")
+                Label("Tableau de suivi", systemImage: "chart.line.uptrend.xyaxis")
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .buttonStyle(.bordered)
@@ -204,5 +168,6 @@ struct BrandHeader: View {
         HomeView()
             .environmentObject(QuestionnaireViewModel())
             .environmentObject(SymptomTrackerViewModel.shared)
+            .environmentObject(AppTabRouter())
     }
 }

@@ -6,6 +6,8 @@ struct MedicamentsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            QuestionnaireProgressBar(currentStep: .medicaments)
+
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     Text("Prenez-vous des médicaments ?")
