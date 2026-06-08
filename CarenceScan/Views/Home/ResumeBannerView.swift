@@ -20,7 +20,7 @@ struct ResumeBannerView: View {
                     .foregroundStyle(CarenceColors.textSecondary)
 
                 HStack {
-                    Label("~\(QuestionnaireResume.minutesEstimees(restantes depuis: etape)) min restantes", systemImage: "clock")
+                    Label("~\(QuestionnaireResume.minutesEstimees(restantesDepuis: etape)) min restantes", systemImage: "clock")
                         .font(.caption)
                         .foregroundStyle(CarenceColors.textSecondary)
                     Spacer()

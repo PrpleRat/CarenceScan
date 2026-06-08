@@ -41,7 +41,7 @@ enum QuestionnaireResume {
         }
     }
 
-    static func minutesEstimees(restantes depuis etape: QuestionnaireStep) -> Int {
+    static func minutesEstimees(restantesDepuis etape: QuestionnaireStep) -> Int {
         switch etape {
         case .profil: return 4
         case .symptomes: return 3
