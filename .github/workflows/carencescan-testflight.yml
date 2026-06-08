@@ -38,6 +38,9 @@ jobs:
         run: |
           for f in ci/*.sh; do tr -d '\r' < "$f" > "$f.tmp" && mv "$f.tmp" "$f"; done
 
+      - name: Vérifier alignement pipeline TestFlight
+        run: bash ci/verify-testflight-pipeline.sh
+
       - name: Sélectionner Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
