@@ -98,6 +98,44 @@ enum PDFExportService {
             soinsHTML += "</ul>"
         }
 
+        let recettes = RecettesEngine.suggererRecettes(depuis: payload.scores, carencesBase: database.carences)
+        var recettesHTML = """
+        <h2 style="color: #4A7C59; margin-top: 32px;">Recettes suggérées</h2>
+        <p style="color: #666; font-size: 12px; margin-bottom: 16px;">
+            Sélectionnées pour couvrir plusieurs de vos carences simultanément.
+        </p>
+        """
+        for item in recettes.prefix(3) {
+            let carences = item.carencesMatchees.map { RecettesEngine.carenceNom(for: $0) }.joined(separator: ", ")
+            recettesHTML += """
+            <div style="margin-bottom: 16px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px;">
+              <p style="font-weight: bold; margin: 0 0 4px;">
+                \(escape(item.recette.emoji)) \(escape(item.recette.titre)) — \(escape(item.recette.temps))
+              </p>
+              <p style="color: #4A7C59; font-size: 11px; margin: 0;">Couvre : \(escape(carences))</p>
+            </div>
+            """
+        }
+
+        let liste = ListeCoursesEngine.genererListe(
+            depuis: payload.scores,
+            symptomesDetectes: payload.symptomeSelections.map(\.symptomeId),
+            database: database
+        )
+        var listeHTML = """
+        <h2 style="color: #4A7C59; margin-top: 32px;">Liste de courses</h2>
+        <h3>💊 Pharmacie</h3>
+        """
+        for item in liste.pharmacie {
+            listeHTML += "<p>☐ \(escape(item.nom))"
+            if let prix = item.prix { listeHTML += " — \(escape(prix))" }
+            listeHTML += "</p>"
+        }
+        listeHTML += "<h3>🛒 Supermarché</h3>"
+        for item in liste.supermarche.prefix(20) {
+            listeHTML += "<p>☐ \(escape(item.nom))</p>"
+        }
+
         return """
         <!DOCTYPE html>
         <html lang="fr">
@@ -136,6 +174,8 @@ enum PDFExportService {
             <tbody>\(complements)</tbody>
           </table>
           \(soinsHTML)
+          \(recettesHTML)
+          \(listeHTML)
           <p class="footer">\(escape(AppConstants.disclaimerPrincipal))</p>
         </body>
         </html>

@@ -6,6 +6,9 @@ struct ResultsView: View {
     @Environment(\.dismiss) private var dismiss
     var onRestart: () -> Void = {}
 
+    @State private var showListeCourses = false
+    @State private var showRecettes = false
+
     private var payload: SavedResultsPayload? {
         vm.savedPayload
     }
@@ -50,6 +53,7 @@ struct ResultsView: View {
                     emptyState
                 } else {
                     carencesSection
+                    coursesRecettesButtons
                 }
 
                 if !soinsLocaux.isEmpty {
@@ -88,6 +92,41 @@ struct ResultsView: View {
         .background(CarenceColors.background.ignoresSafeArea())
         .navigationTitle("Résultats")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(isPresented: $showListeCourses) {
+            ListeCoursesView(
+                scores: vm.scores,
+                symptomesDetectes: Array(vm.symptomesSelectionnes)
+            )
+        }
+        .navigationDestination(isPresented: $showRecettes) {
+            RecettesView(scores: vm.scores)
+        }
+    }
+
+    private var coursesRecettesButtons: some View {
+        HStack(spacing: 12) {
+            Button {
+                showListeCourses = true
+            } label: {
+                Label("Ma liste de courses", systemImage: "cart.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(CarenceColors.primary)
+
+            Button {
+                showRecettes = true
+            } label: {
+                Label("Recettes pour moi", systemImage: "fork.knife")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+            }
+            .buttonStyle(.bordered)
+            .tint(CarenceColors.primary)
+        }
     }
 
     private var headerSection: some View {
