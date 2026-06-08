@@ -28,6 +28,7 @@ enum SmartNotificationService {
         try? await center.add(request)
     }
 
+    @MainActor
     private static func buildTip(tracker: SymptomTrackerViewModel) -> String? {
         let ids = tracker.trackedSymptomeIds
         let fatigueIds = ["fatigue_intense", "fatigue_matin", "somnolence_journee"]

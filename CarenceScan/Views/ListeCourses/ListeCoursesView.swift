@@ -315,3 +315,8 @@ struct ListeCoursesView: View {
         return "Autres"
     }
 }
+
+struct ShareTextItem: Identifiable {
+    let id = UUID()
+    let text: String
+}
