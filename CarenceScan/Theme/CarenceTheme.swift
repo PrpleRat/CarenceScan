@@ -98,4 +98,14 @@ enum ProbabilityLevel: String, Codable, CaseIterable {
         case .quasiCertaine: return 0.95
         }
     }
+
+    /// Ordre d'affichage : quasi certaine en premier.
+    var sortOrder: Int {
+        switch self {
+        case .quasiCertaine: return 4
+        case .tresProbable: return 3
+        case .probable: return 2
+        case .possible: return 1
+        }
+    }
 }

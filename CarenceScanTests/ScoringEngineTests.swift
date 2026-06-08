@@ -132,4 +132,26 @@ final class ScoringEngineTests: XCTestCase {
             XCTAssertGreaterThanOrEqual(withMedMag, baseMag + 20)
         }
     }
+
+    func testScoresSortedByNiveauThenScore() {
+        let scores = ScoringEngine.calculerScores(
+            selections: [
+                SymptomeSelection(symptomeId: "fatigue_intense"),
+                SymptomeSelection(symptomeId: "gencives_douloureuses"),
+                SymptomeSelection(symptomeId: "coins_levres_craques"),
+                SymptomeSelection(symptomeId: "ecchymoses_faciles"),
+                SymptomeSelection(symptomeId: "crampes_nocturnes"),
+                SymptomeSelection(symptomeId: "mauvais_sommeil")
+            ]
+        )
+        guard scores.count >= 2 else { return }
+        for index in 0..<(scores.count - 1) {
+            let current = scores[index]
+            let next = scores[index + 1]
+            XCTAssertGreaterThanOrEqual(current.niveau.sortOrder, next.niveau.sortOrder)
+            if current.niveau.sortOrder == next.niveau.sortOrder {
+                XCTAssertGreaterThanOrEqual(current.score, next.score)
+            }
+        }
+    }
 }

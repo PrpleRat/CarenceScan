@@ -202,7 +202,12 @@ enum ScoringEngine {
             )
         }
 
-        return resultats.sorted { $0.score > $1.score }
+        return resultats.sorted { lhs, rhs in
+            if lhs.niveau.sortOrder != rhs.niveau.sortOrder {
+                return lhs.niveau.sortOrder > rhs.niveau.sortOrder
+            }
+            return lhs.score > rhs.score
+        }
     }
 
     /// Compatibilité v1 — symptômes sans fréquence explicite (= fréquent).
