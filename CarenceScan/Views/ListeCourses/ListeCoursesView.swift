@@ -41,6 +41,14 @@ struct ListeCoursesView: View {
         .navigationTitle("Ma liste de courses")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    NavigationHelpers.popToRoot()
+                } label: {
+                    Label("Accueil", systemImage: "house.fill")
+                }
+                .accessibilityLabel("Retour à l'accueil")
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     shareText = ShareTextItem(text: ListeCoursesEngine.genererTextePartage(liste: liste))

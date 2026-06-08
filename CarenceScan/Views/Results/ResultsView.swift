@@ -92,6 +92,16 @@ struct ResultsView: View {
         .background(CarenceColors.background.ignoresSafeArea())
         .navigationTitle("Résultats")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    NavigationHelpers.popToRoot()
+                } label: {
+                    Label("Accueil", systemImage: "house.fill")
+                }
+                .accessibilityLabel("Retour à l'accueil")
+            }
+        }
         .navigationDestination(isPresented: $showListeCourses) {
             ListeCoursesView(
                 scores: vm.scores,

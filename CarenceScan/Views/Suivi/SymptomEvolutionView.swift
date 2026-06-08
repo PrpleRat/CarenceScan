@@ -2,9 +2,7 @@ import SwiftUI
 
 struct SymptomEvolutionView: View {
     @EnvironmentObject private var tracker: SymptomTrackerViewModel
-    @EnvironmentObject private var vm: QuestionnaireViewModel
 
-    @State private var selectedSymptomeId: String?
     private let lastDays = 14
 
     private var symptomeIds: [String] {
@@ -14,8 +12,8 @@ struct SymptomEvolutionView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Visualisez la fréquence de vos symptômes sur les \(lastDays) derniers jours (check-ins quotidiens).")
+            VStack(alignment: .leading, spacing: 24) {
+                Text("Fréquence de vos symptômes sur les \(lastDays) derniers jours — tous vos symptômes suivis sur une seule page.")
                     .font(.subheadline)
                     .foregroundStyle(CarenceColors.textSecondary)
 
@@ -26,20 +24,19 @@ struct SymptomEvolutionView: View {
                         description: Text("Faites un bilan puis enregistrez vos symptômes chaque jour.")
                     )
                 } else {
-                    Picker("Symptôme", selection: Binding(
-                        get: { selectedSymptomeId ?? symptomeIds[0] },
-                        set: { selectedSymptomeId = $0 }
-                    )) {
-                        ForEach(symptomeIds, id: \.self) { id in
-                            Text(CarenceDatabase.symptomeLabel(for: id)).tag(id)
-                        }
+                    HStack(spacing: 16) {
+                        legendDot(color: CarenceColors.alert, label: "Oui")
+                        legendDot(color: CarenceColors.primary.opacity(0.35), label: "Non")
+                        legendDot(color: CarenceColors.border, label: "Non renseigné")
                     }
-                    .pickerStyle(.menu)
+                    .font(.caption2)
+                    .padding(.bottom, 4)
 
-                    if let id = selectedSymptomeId ?? symptomeIds.first {
+                    ForEach(symptomeIds, id: \.self) { id in
                         evolutionChart(symptomeId: id)
-                        bilanHistorySection
                     }
+
+                    bilanHistorySection
                 }
             }
             .padding(20)
@@ -48,7 +45,6 @@ struct SymptomEvolutionView: View {
         .navigationTitle("Évolution")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
-            selectedSymptomeId = symptomeIds.first
             tracker.reloadJournal()
         }
     }
@@ -60,41 +56,41 @@ struct SymptomEvolutionView: View {
         })
         let presentCount = entries.filter(\.present).count
 
-        return VStack(alignment: .leading, spacing: 12) {
+        return VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text(CarenceDatabase.symptomeLabel(for: symptomeId))
-                    .font(.headline)
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(CarenceColors.textPrimary)
+                    .multilineTextAlignment(.leading)
                 Spacer()
                 Text("\(presentCount)/\(lastDays) j")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(CarenceColors.primary)
             }
 
-            HStack(alignment: .bottom, spacing: 4) {
-                ForEach(tracker.daysWithData(lastDays: lastDays), id: \.self) { day in
-                    let present = entryByDay[day]
-                    VStack(spacing: 4) {
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(barColor(present: present))
-                            .frame(width: 14, height: present == nil ? 8 : (present == true ? 44 : 16))
-                        Text(day.formatted(.dateTime.day()))
-                            .font(.system(size: 9))
-                            .foregroundStyle(CarenceColors.textSecondary)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(alignment: .bottom, spacing: 4) {
+                    ForEach(tracker.daysWithData(lastDays: lastDays), id: \.self) { day in
+                        let present = entryByDay[day]
+                        VStack(spacing: 4) {
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(barColor(present: present))
+                                .frame(width: 12, height: present == nil ? 8 : (present == true ? 40 : 14))
+                            Text(day.formatted(.dateTime.day()))
+                                .font(.system(size: 8))
+                                .foregroundStyle(CarenceColors.textSecondary)
+                        }
                     }
                 }
+                .padding(.horizontal, 4)
             }
-            .frame(maxWidth: .infinity)
-            .padding()
+            .padding(12)
             .background(CarenceColors.surface)
             .clipShape(RoundedRectangle(cornerRadius: 12))
-
-            HStack(spacing: 16) {
-                legendDot(color: CarenceColors.alert, label: "Oui")
-                legendDot(color: CarenceColors.primary.opacity(0.35), label: "Non")
-                legendDot(color: CarenceColors.border, label: "Non renseigné")
-            }
-            .font(.caption2)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(CarenceColors.border, lineWidth: 1)
+            )
         }
     }
 

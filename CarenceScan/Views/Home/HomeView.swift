@@ -7,7 +7,7 @@ struct HomeView: View {
     @State private var showResults = false
     @State private var showDailyCheckIn = false
     @State private var showEvolution = false
-    @State private var showEncyclopedie = false
+    @State private var showListeCourses = false
 
     var body: some View {
         ScrollView {
@@ -43,13 +43,7 @@ struct HomeView: View {
                 }
 
                 if ResultsStorage.hasSavedResults {
-                    Button("Voir mes derniers résultats") {
-                        vm.loadSavedResults()
-                        showResults = true
-                    }
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(CarenceColors.primary)
-                    .accessibilityLabel("Voir mes derniers résultats")
+                    accesRapidesSection
                 }
 
                 NavigationLink {
@@ -86,6 +80,14 @@ struct HomeView: View {
         .navigationDestination(isPresented: $showEvolution) {
             SymptomEvolutionView()
         }
+        .navigationDestination(isPresented: $showListeCourses) {
+            ListeCoursesView(
+                scores: vm.scores.isEmpty ? (ResultsStorage.load()?.scores ?? []) : vm.scores,
+                symptomesDetectes: vm.symptomesSelectionnes.isEmpty
+                    ? (ResultsStorage.load()?.symptomeSelections.map(\.symptomeId) ?? [])
+                    : Array(vm.symptomesSelectionnes)
+            )
+        }
         .onChange(of: tracker.openDailyCheckIn) { _, open in
             if open {
                 showDailyCheckIn = true
@@ -98,6 +100,41 @@ struct HomeView: View {
                 tracker.openDailyCheckIn = false
             }
         }
+    }
+
+    private var accesRapidesSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Accès rapide")
+                .font(.headline)
+                .foregroundStyle(CarenceColors.textPrimary)
+
+            Button {
+                vm.loadSavedResults()
+                showResults = true
+            } label: {
+                Label("Voir mes carences", systemImage: "list.clipboard.fill")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.bordered)
+            .tint(CarenceColors.primary)
+
+            Button {
+                vm.loadSavedResults()
+                showListeCourses = true
+            } label: {
+                Label("Ma liste de courses", systemImage: "cart.fill")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(CarenceColors.primary)
+        }
+        .padding(14)
+        .background(CarenceColors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(CarenceColors.border, lineWidth: 1)
+        )
     }
 
     private var suiviSection: some View {

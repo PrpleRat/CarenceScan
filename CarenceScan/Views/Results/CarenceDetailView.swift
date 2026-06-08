@@ -38,6 +38,16 @@ struct CarenceDetailView: View {
         .background(CarenceColors.background.ignoresSafeArea())
         .navigationTitle(carence?.nom ?? "Détail")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    NavigationHelpers.popToRoot()
+                } label: {
+                    Label("Accueil", systemImage: "house.fill")
+                }
+                .accessibilityLabel("Retour à l'accueil")
+            }
+        }
     }
 
     @ViewBuilder

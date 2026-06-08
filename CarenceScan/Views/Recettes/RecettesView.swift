@@ -50,6 +50,16 @@ struct RecettesView: View {
         .background(CarenceColors.background.ignoresSafeArea())
         .navigationTitle("Recettes pour vous")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    NavigationHelpers.popToRoot()
+                } label: {
+                    Label("Accueil", systemImage: "house.fill")
+                }
+                .accessibilityLabel("Retour à l'accueil")
+            }
+        }
     }
 
     private var filtresSection: some View {
