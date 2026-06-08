@@ -40,14 +40,17 @@ def main() -> None:
     p12_password = require_env("IOS_DISTRIBUTION_CERTIFICATE_PASSWORD")
     keychain_password = require_env("KEYCHAIN_PASSWORD")
 
+    slug = os.environ.get("CI_APP_SLUG", "app").strip().lower()
+    slug = re.sub(r"[^a-z0-9-]+", "-", slug) or "app"
+
     eprint(
         f"Secrets présents — cert base64: {len(b64_raw)} car., "
-        f"mot de passe p12: {len(p12_password)} car."
+        f"mot de passe p12: {len(p12_password)} car., app: {slug}"
     )
 
     runner_temp = Path(os.environ.get("RUNNER_TEMP", "/tmp"))
     run_id = os.environ.get("GITHUB_RUN_ID", "local")
-    keychain_path = runner_temp / f"carencescan-ci-{run_id}.keychain-db"
+    keychain_path = runner_temp / f"{slug}-ci-{run_id}.keychain-db"
     cert_path = runner_temp / "distribution.p12"
     wwdr_path = runner_temp / "AppleWWDRCAG3.cer"
 
