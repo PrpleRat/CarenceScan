@@ -96,23 +96,35 @@ platform :ios do
     )
 
     keychain_path = ENV.fetch("KEYCHAIN_PATH")
-    keychain_password = ENV.fetch("KEYCHAIN_PASSWORD")
     profiles_path = ENV.fetch("PROFILES_PATH")
-    certs_path = ENV.fetch("CERTS_PATH")
 
-    # Résout l'ID certificat Apple (ex. XK9ABC1234) via l'API — pas le hash keychain ni le Team ID.
-    cert(
-      api_key: api_key,
-      development: false,
-      platform: "ios",
-      readonly: true,
-      keychain_path: keychain_path,
-      keychain_password: keychain_password,
-      output_path: certs_path
-    )
+    require "openssl"
+    require "base64"
 
-    cert_id = lane_context[SharedValues::CERT_CERTIFICATE_ID]
-    UI.user_error!("cert_id manquant — certificat Distribution introuvable sur Apple Developer") if cert_id.to_s.empty?
+    cert_line = sh(
+      "security find-identity -v -p codesigning '#{keychain_path}' 2>/dev/null | grep 'Apple Distribution' | head -1",
+      log: false
+    ).strip
+    UI.user_error!("Apple Distribution absent du trousseau CI") if cert_line.to_s.empty?
+
+    keychain_sha1 = cert_line.match(/\)\s+([A-F0-9]{40})\s/i)&.captures&.first
+    UI.user_error!("SHA-1 keychain introuvable — ligne: #{cert_line}") unless keychain_sha1
+    UI.message("SHA-1 keychain: #{keychain_sha1}")
+
+    dist_type = Spaceship::ConnectAPI::Certificate::CertificateType::IOS_DISTRIBUTION
+    api_certs = Spaceship::ConnectAPI::Certificate.all(filter: { certificateType: dist_type })
+
+    cert_id = nil
+    api_certs.each do |api_cert|
+      der = Base64.decode64(api_cert.certificate_content)
+      fingerprint = OpenSSL::Digest::SHA1.hexdigest(der).upcase
+      next unless fingerprint == keychain_sha1.upcase
+
+      cert_id = api_cert.id
+      break
+    end
+
+    UI.user_error!("Certificat introuvable sur Apple Developer pour SHA-1 #{keychain_sha1}") unless cert_id
     UI.message("Certificat Apple ID (API): #{cert_id}")
 
     sigh(
