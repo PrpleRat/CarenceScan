@@ -117,7 +117,16 @@ struct HomeView: View {
             .tint(CarenceColors.primary)
 
             Button {
-                tabRouter.openCourses()
+                tabRouter.openRecettes()
+            } label: {
+                Label("Mes recettes personnalisées", systemImage: "fork.knife")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(CarenceColors.primary)
+
+            Button {
+                tabRouter.openCourses(section: .liste)
             } label: {
                 Label("Ma liste de courses", systemImage: "cart.fill")
                     .frame(maxWidth: .infinity, alignment: .leading)

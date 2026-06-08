@@ -120,6 +120,8 @@ struct BilanTabRootView: View {
 
 struct CoursesTabRootView: View {
     @EnvironmentObject private var vm: QuestionnaireViewModel
+    @EnvironmentObject private var tabRouter: AppTabRouter
+    @State private var section: CoursesHubSection = .liste
 
     private var scores: [ScoreResult] {
         vm.scores.isEmpty ? (ResultsStorage.load()?.scores ?? []) : vm.scores
@@ -131,15 +133,48 @@ struct CoursesTabRootView: View {
             : Array(vm.symptomesSelectionnes)
     }
 
+    private var recettesCount: Int {
+        RecettesEngine.suggererRecettes(depuis: scores).count
+    }
+
     var body: some View {
         Group {
             if ResultsStorage.hasSavedResults, !scores.isEmpty {
-                ListeCoursesView(scores: scores, symptomesDetectes: symptomes, showHomeButton: false)
+                VStack(spacing: 0) {
+                    Picker("Section", selection: $section) {
+                        Text("🛒 Liste").tag(CoursesHubSection.liste)
+                        Text("🍳 Recettes (\(recettesCount))").tag(CoursesHubSection.recettes)
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal)
+                    .padding(.vertical, 10)
+                    .background(CarenceColors.surface)
+
+                    switch section {
+                    case .liste:
+                        ListeCoursesView(
+                            scores: scores,
+                            symptomesDetectes: symptomes,
+                            showHomeButton: false,
+                            embedded: true
+                        )
+                    case .recettes:
+                        RecettesView(scores: scores, showHomeButton: false, embedded: true)
+                    }
+                }
+                .navigationTitle(section == .liste ? "Liste de courses" : "Recettes pour vous")
+                .navigationBarTitleDisplayMode(.inline)
             } else {
                 coursesVide
             }
         }
-        .onAppear { vm.loadSavedResults() }
+        .onAppear {
+            vm.loadSavedResults()
+            section = tabRouter.coursesSection
+        }
+        .onChange(of: tabRouter.coursesSection) { _, newSection in
+            section = newSection
+        }
     }
 
     private var coursesVide: some View {
@@ -148,9 +183,9 @@ struct CoursesTabRootView: View {
             Image(systemName: "cart")
                 .font(.system(size: 48))
                 .foregroundStyle(CarenceColors.textSecondary)
-            Text("Liste de courses")
+            Text("Courses & recettes")
                 .font(.title2.bold())
-            Text("Complétez d'abord votre bilan pour générer une liste adaptée à vos carences.")
+            Text("Complétez d'abord votre bilan pour générer une liste et des recettes adaptées à vos carences.")
                 .font(.subheadline)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(CarenceColors.textSecondary)

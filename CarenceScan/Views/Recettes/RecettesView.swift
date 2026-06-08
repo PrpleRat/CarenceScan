@@ -2,6 +2,8 @@ import SwiftUI
 
 struct RecettesView: View {
     let scores: [ScoreResult]
+    var showHomeButton: Bool = true
+    var embedded: Bool = false
 
     @State private var filtreTemps: FiltreTemps = .tous
     @State private var filtreDifficulte: FiltreDifficulte = .tous
@@ -48,18 +50,7 @@ struct RecettesView: View {
             .padding(20)
         }
         .background(CarenceColors.background.ignoresSafeArea())
-        .navigationTitle("Recettes pour vous")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    NavigationHelpers.popToRoot()
-                } label: {
-                    Label("Accueil", systemImage: "house.fill")
-                }
-                .accessibilityLabel("Retour à l'accueil")
-            }
-        }
+        .modifier(RecettesNavigationChrome(showHomeButton: showHomeButton, embedded: embedded))
     }
 
     private var filtresSection: some View {
@@ -131,6 +122,33 @@ struct RecettesView: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(CarenceColors.border, lineWidth: 1)
         )
+    }
+}
+
+private struct RecettesNavigationChrome: ViewModifier {
+    let showHomeButton: Bool
+    let embedded: Bool
+
+    func body(content: Content) -> some View {
+        if embedded {
+            content
+        } else {
+            content
+                .navigationTitle("Recettes pour vous")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    if showHomeButton {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button {
+                                NavigationHelpers.popToRoot()
+                            } label: {
+                                Label("Accueil", systemImage: "house.fill")
+                            }
+                            .accessibilityLabel("Retour à l'accueil")
+                        }
+                    }
+                }
+        }
     }
 }
 

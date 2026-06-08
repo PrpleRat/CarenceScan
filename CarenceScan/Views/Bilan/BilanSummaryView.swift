@@ -124,14 +124,29 @@ struct BilanSummaryView: View {
             .buttonStyle(.borderedProminent)
             .tint(CarenceColors.primary)
 
-            Button {
-                tabRouter.openCourses()
-            } label: {
-                Label("Ma liste de courses", systemImage: "cart.fill")
-                    .frame(maxWidth: .infinity)
+            HStack(spacing: 12) {
+                Button {
+                    tabRouter.openCourses(section: .liste)
+                } label: {
+                    Label("Liste de courses", systemImage: "cart.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                }
+                .buttonStyle(.bordered)
+                .tint(CarenceColors.primary)
+
+                Button {
+                    tabRouter.openRecettes()
+                } label: {
+                    Label("Recettes pour moi", systemImage: "fork.knife")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(CarenceColors.primary)
             }
-            .buttonStyle(.bordered)
-            .tint(CarenceColors.primary)
 
             if let payload = vm.savedPayload ?? ResultsStorage.load() {
                 DoctorExportButton(payload: payload)

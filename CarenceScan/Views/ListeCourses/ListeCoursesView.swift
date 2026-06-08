@@ -4,6 +4,7 @@ struct ListeCoursesView: View {
     let scores: [ScoreResult]
     let symptomesDetectes: [String]
     var showHomeButton: Bool = true
+    var embedded: Bool = false
 
     @State private var section: ListeCategorie = .supermarche
     @State private var checkedIds: Set<String> = ListeCoursesStorage.loadCheckedIds()
@@ -53,28 +54,13 @@ struct ListeCoursesView: View {
             footerBudget
         }
         .background(CarenceColors.background.ignoresSafeArea())
-        .navigationTitle("Ma liste de courses")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            if showHomeButton {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        NavigationHelpers.popToRoot()
-                    } label: {
-                        Label("Accueil", systemImage: "house.fill")
-                    }
-                    .accessibilityLabel("Retour à l'accueil")
-                }
+        .modifier(ListeCoursesNavigationChrome(
+            embedded: embedded,
+            showHomeButton: showHomeButton,
+            shareAction: {
+                shareText = ShareTextItem(text: ListeCoursesEngine.genererTextePartage(liste: liste))
             }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    shareText = ShareTextItem(text: ListeCoursesEngine.genererTextePartage(liste: liste))
-                } label: {
-                    Image(systemName: "square.and.arrow.up")
-                }
-                .accessibilityLabel("Partager la liste")
-            }
-        }
+        ))
         .sheet(item: $shareText) { item in
             ShareSheet(items: [item.text])
         }
@@ -319,4 +305,45 @@ struct ListeCoursesView: View {
 struct ShareTextItem: Identifiable {
     let id = UUID()
     let text: String
+}
+
+private struct ListeCoursesNavigationChrome: ViewModifier {
+    let embedded: Bool
+    let showHomeButton: Bool
+    let shareAction: () -> Void
+
+    func body(content: Content) -> some View {
+        if embedded {
+            content.toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: shareAction) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .accessibilityLabel("Partager la liste")
+                }
+            }
+        } else {
+            content
+                .navigationTitle("Ma liste de courses")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    if showHomeButton {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button {
+                                NavigationHelpers.popToRoot()
+                            } label: {
+                                Label("Accueil", systemImage: "house.fill")
+                            }
+                            .accessibilityLabel("Retour à l'accueil")
+                        }
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button(action: shareAction) {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                        .accessibilityLabel("Partager la liste")
+                    }
+                }
+        }
+    }
 }
