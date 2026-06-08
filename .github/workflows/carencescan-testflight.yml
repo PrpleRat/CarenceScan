@@ -102,6 +102,8 @@ jobs:
           xcodegen generate --spec project.yml
 
       - name: Préparer le trousseau pour codesign
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
           bash ci/keychain-unlock.sh
           security list-keychains -d user -s "$KEYCHAIN_PATH"
@@ -139,6 +141,7 @@ jobs:
         env:
           ARCHIVE_PATH: ${{ runner.temp }}/CarenceScan.xcarchive
           EXPORT_PATH: ${{ runner.temp }}/export
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
           bash ci/keychain-unlock.sh
           rm -rf "$EXPORT_PATH"

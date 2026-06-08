@@ -143,6 +143,7 @@ def main() -> None:
     if github_env:
         with open(github_env, "a", encoding="utf-8") as fh:
             fh.write(f"KEYCHAIN_PATH={keychain_path}\n")
+            fh.write(f"KEYCHAIN_PASSWORD={keychain_password}\n")
 
     eprint("Certificat Distribution installé (réutilisé).")
 
