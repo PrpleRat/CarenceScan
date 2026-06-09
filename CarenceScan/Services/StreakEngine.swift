@@ -8,6 +8,7 @@ struct GamificationBadge: Identifiable, Hashable {
     let obtenu: Bool
 }
 
+@MainActor
 enum StreakEngine {
 
     static func streakActuel(tracker: SymptomTrackerViewModel) -> Int {

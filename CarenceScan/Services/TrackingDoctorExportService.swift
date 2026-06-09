@@ -1,5 +1,6 @@
 import UIKit
 
+@MainActor
 enum TrackingDoctorExportService {
 
     static func generatePDF(

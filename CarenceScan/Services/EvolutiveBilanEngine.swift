@@ -23,6 +23,7 @@ struct EvolutiveBilanResult {
     }
 }
 
+@MainActor
 enum EvolutiveBilanEngine {
 
     /// Fusionne le bilan de référence (questionnaire) avec les fréquences du journal quotidien.
