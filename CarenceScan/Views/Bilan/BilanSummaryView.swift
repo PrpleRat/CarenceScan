@@ -124,6 +124,17 @@ struct BilanSummaryView: View {
             .buttonStyle(.borderedProminent)
             .tint(CarenceColors.primary)
 
+            if ResultsStorage.hasSavedResults {
+                NavigationLink {
+                    EvolutiveBilanView()
+                } label: {
+                    Label("Bilan évolutif (suivi 14j)", systemImage: "arrow.triangle.2.circlepath")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(CarenceColors.primary)
+            }
+
             HStack(spacing: 12) {
                 Button {
                     tabRouter.openCourses(section: .liste)

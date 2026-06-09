@@ -242,6 +242,7 @@ struct DailyCheckInView: View {
             tracker.record(symptomeId: id, present: present)
         }
         tracker.markFirstCheckInCompleted()
+        StreakEngine.mettreAJourRecord(tracker: tracker)
     }
 }
 

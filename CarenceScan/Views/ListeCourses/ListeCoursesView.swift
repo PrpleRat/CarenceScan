@@ -7,8 +7,9 @@ struct ListeCoursesView: View {
     var embedded: Bool = false
 
     @State private var section: ListeCategorie = .supermarche
-    @State private var checkedIds: Set<String> = ListeCoursesStorage.loadCheckedIds()
+    @State private var checkedIds: Set<String> = []
     @State private var shareText: ShareTextItem?
+    @State private var weekHistory: [CoursesWeekSnapshot] = []
 
     private var liste: ListeCourses {
         ListeCoursesEngine.genererListe(
@@ -65,6 +66,18 @@ struct ListeCoursesView: View {
         .sheet(item: $shareText) { item in
             ShareSheet(items: [item.text])
         }
+        .onAppear {
+            applyWeekRollover()
+        }
+    }
+
+    private func applyWeekRollover() {
+        let loaded = ListeCoursesStorage.loadCheckedIds()
+        checkedIds = ListeCoursesWeekStorage.rolloverIfNeeded(
+            checkedIds: loaded,
+            totalCount: totalCount
+        )
+        weekHistory = ListeCoursesWeekStorage.loadHistory()
     }
 
     private var livingStatsHeader: some View {
@@ -86,7 +99,7 @@ struct ListeCoursesView: View {
             ProgressView(value: progress)
                 .tint(CarenceColors.primary)
             HStack {
-                Text("Semaine du \(semaineCourante)")
+                Text("Semaine du \(semaineCourante) · \(ListeCoursesWeekStorage.currentWeekKey())")
                     .font(.caption2)
                     .foregroundStyle(CarenceColors.textSecondary)
                 Spacer()
@@ -98,9 +111,35 @@ struct ListeCoursesView: View {
                     .foregroundStyle(CarenceColors.primary)
                 }
             }
+
+            if !weekHistory.isEmpty {
+                weekHistorySection
+            }
         }
         .padding(14)
         .background(CarenceColors.surface)
+    }
+
+    private var weekHistorySection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Semaines précédentes")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(CarenceColors.textSecondary)
+            ForEach(weekHistory.prefix(3)) { snap in
+                HStack {
+                    Text(snap.weekStart.formatted(date: .abbreviated, time: .omitted))
+                        .font(.caption2)
+                    Spacer()
+                    Text("\(snap.checkedCount)/\(snap.totalCount) cochés")
+                        .font(.caption2)
+                        .foregroundStyle(CarenceColors.textSecondary)
+                }
+            }
+            Text("La liste se réinitialise automatiquement chaque lundi.")
+                .font(.caption2)
+                .foregroundStyle(CarenceColors.textSecondary)
+        }
+        .padding(.top, 4)
     }
 
     private var semaineCourante: String {

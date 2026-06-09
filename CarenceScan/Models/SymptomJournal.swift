@@ -22,6 +22,8 @@ struct SymptomTrackingSettings: Codable, Equatable {
     var trackingStartDate: Date?
     /// Premier check-in quotidien effectué.
     var hasCompletedFirstCheckIn: Bool
+    /// Record de jours consécutifs de check-in.
+    var longestStreak: Int
 
     static let `default` = SymptomTrackingSettings(
         notificationsEnabled: false,
@@ -30,7 +32,8 @@ struct SymptomTrackingSettings: Codable, Equatable {
         trackedSymptomeIds: [],
         addedSymptomeIds: [],
         trackingStartDate: nil,
-        hasCompletedFirstCheckIn: false
+        hasCompletedFirstCheckIn: false,
+        longestStreak: 0
     )
 
     init(
@@ -40,7 +43,8 @@ struct SymptomTrackingSettings: Codable, Equatable {
         trackedSymptomeIds: [String],
         addedSymptomeIds: [String] = [],
         trackingStartDate: Date? = nil,
-        hasCompletedFirstCheckIn: Bool = false
+        hasCompletedFirstCheckIn: Bool = false,
+        longestStreak: Int = 0
     ) {
         self.notificationsEnabled = notificationsEnabled
         self.reminderHour = reminderHour
@@ -49,6 +53,7 @@ struct SymptomTrackingSettings: Codable, Equatable {
         self.addedSymptomeIds = addedSymptomeIds
         self.trackingStartDate = trackingStartDate
         self.hasCompletedFirstCheckIn = hasCompletedFirstCheckIn
+        self.longestStreak = longestStreak
     }
 
     init(from decoder: Decoder) throws {
@@ -60,11 +65,12 @@ struct SymptomTrackingSettings: Codable, Equatable {
         addedSymptomeIds = try c.decodeIfPresent([String].self, forKey: .addedSymptomeIds) ?? []
         trackingStartDate = try c.decodeIfPresent(Date.self, forKey: .trackingStartDate)
         hasCompletedFirstCheckIn = try c.decodeIfPresent(Bool.self, forKey: .hasCompletedFirstCheckIn) ?? false
+        longestStreak = try c.decodeIfPresent(Int.self, forKey: .longestStreak) ?? 0
     }
 
     enum CodingKeys: String, CodingKey {
         case notificationsEnabled, reminderHour, reminderMinute, trackedSymptomeIds
-        case addedSymptomeIds, trackingStartDate, hasCompletedFirstCheckIn
+        case addedSymptomeIds, trackingStartDate, hasCompletedFirstCheckIn, longestStreak
     }
 }
 

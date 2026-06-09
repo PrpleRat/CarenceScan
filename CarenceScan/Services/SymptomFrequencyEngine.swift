@@ -33,6 +33,16 @@ enum JournalFrequence: String, CaseIterable, Hashable {
         case .constant: return "alert"
         }
     }
+
+    /// Conversion pour le recalcul des scores (nil = symptôme résolu, exclu du scoring).
+    var scoringFrequence: Frequence? {
+        switch self {
+        case .jamais: return nil
+        case .occasionnel: return .occasionnel
+        case .frequent: return .frequent
+        case .constant: return .constant
+        }
+    }
 }
 
 enum SymptomFrequencyEngine {

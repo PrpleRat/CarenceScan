@@ -25,6 +25,8 @@ enum AppConstants {
     static let bilanHistoryKey = "carencescan.bilan.history"
     static let listeCoursesCheckedKey = "carencescan.liste.checked"
     static let listeCoursesExtraKey = "carencescan.liste.extra"
+    static let listeCoursesWeekKey = "carencescan.liste.week"
+    static let listeCoursesWeekHistoryKey = "carencescan.liste.week.history"
 
     static let dailyReminderNotificationId = "carencescan.daily.symptoms"
     static let notificationPermissionMessage =

@@ -6,35 +6,36 @@ struct SuiviDashboardView: View {
     @State private var showEvolution = false
 
     private var ids: [String] { tracker.trackedSymptomeIds }
+    private var evolutif: EvolutiveBilanResult? {
+        EvolutiveBilanEngine.calculerDepuisStockage(tracker: tracker)
+    }
+    private var streak: Int { StreakEngine.streakActuel(tracker: tracker) }
+    private var badges: [GamificationBadge] {
+        StreakEngine.badges(tracker: tracker, evolutif: evolutif)
+    }
+    private var profil: ProfilUtilisateur? { ResultsStorage.load()?.profil }
+    private var showPregnancyMode: Bool {
+        profil?.situationHormonale == .enceinte || profil?.situationHormonale == .allaitante
+    }
+
     private var todayDone: Int {
         ids.filter { tracker.isPresentToday(symptomeId: $0) != nil }.count
-    }
-    private var streak: Int {
-        guard !ids.isEmpty else { return 0 }
-        var count = 0
-        let cal = Calendar.current
-        var day = cal.startOfDay(for: Date())
-        while true {
-            let hasEntry = ids.contains { id in
-                tracker.journalEntries.contains {
-                    $0.symptomeId == id && cal.isDate($0.date, inSameDayAs: day)
-                }
-            }
-            guard hasEntry else { break }
-            count += 1
-            guard let prev = cal.date(byAdding: .day, value: -1, to: day) else { break }
-            day = prev
-        }
-        return count
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                if showPregnancyMode, let profil, let payload = ResultsStorage.load() {
+                    PregnancySuiviCard(profil: profil, scores: payload.scores)
+                }
+
                 statsGrid
+                badgesSection
                 checkInCard
+                evolutifCard
                 evolutionCard
                 symptomesCard
+                exportCard
                 settingsCard
             }
             .padding(20)
@@ -61,17 +62,51 @@ struct SuiviDashboardView: View {
             )
             statTile(
                 valeur: "\(streak)",
-                label: "Jours consécutifs",
+                label: "Série en cours",
                 icon: "flame.fill",
                 color: CarenceColors.warning
             )
             statTile(
-                valeur: "\(ids.count)",
-                label: "Symptômes suivis",
-                icon: "heart.text.square",
-                color: CarenceColors.textSecondary
+                valeur: "\(tracker.settings.longestStreak)",
+                label: "Record",
+                icon: "trophy.fill",
+                color: CarenceColors.primary
             )
         }
+    }
+
+    private var badgesSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Badges")
+                .font(.headline)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(badges) { badge in
+                        badgeTile(badge)
+                    }
+                }
+            }
+        }
+        .padding(14)
+        .background(CarenceColors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func badgeTile(_ badge: GamificationBadge) -> some View {
+        VStack(spacing: 6) {
+            Image(systemName: badge.icon)
+                .font(.title3)
+                .foregroundStyle(badge.obtenu ? CarenceColors.warning : CarenceColors.border)
+            Text(badge.titre)
+                .font(.caption2.weight(.semibold))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(badge.obtenu ? CarenceColors.textPrimary : CarenceColors.textSecondary)
+        }
+        .frame(width: 88)
+        .padding(.vertical, 10)
+        .background(badge.obtenu ? CarenceColors.warning.opacity(0.12) : CarenceColors.border.opacity(0.2))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .opacity(badge.obtenu ? 1 : 0.55)
     }
 
     private func statTile(valeur: String, label: String, icon: String, color: Color) -> some View {
@@ -100,7 +135,7 @@ struct SuiviDashboardView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Check-in du jour")
                 .font(.headline)
-            Text("30 secondes pour noter vos symptômes et suivre l'évolution.")
+            Text("Bilan complet une fois · puis oui/non chaque jour. Vous pouvez ajouter des symptômes.")
                 .font(.caption)
                 .foregroundStyle(CarenceColors.textSecondary)
             Button {
@@ -111,7 +146,33 @@ struct SuiviDashboardView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(CarenceColors.primary)
-            .disabled(ids.isEmpty)
+            .disabled(ids.isEmpty && ResultsStorage.load() == nil)
+        }
+        .padding(14)
+        .background(CarenceColors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    private var evolutifCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Bilan évolutif")
+                .font(.headline)
+            if let evolutif {
+                Text(evolutif.estPret
+                     ? "Carences recalculées en combinant votre bilan de référence et \(evolutif.joursSuivi) j de journal."
+                     : "Encore \(max(0, SymptomFrequencyEngine.minDaysForEstimate - evolutif.joursSuivi)) j de check-in pour activer le recalcul.")
+                    .font(.caption)
+                    .foregroundStyle(CarenceColors.textSecondary)
+            }
+            NavigationLink {
+                EvolutiveBilanView()
+            } label: {
+                Label("Voir le bilan évolutif", systemImage: "arrow.triangle.2.circlepath")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.bordered)
+            .tint(CarenceColors.primary)
+            .disabled(ResultsStorage.load() == nil)
         }
         .padding(14)
         .background(CarenceColors.surface)
@@ -156,12 +217,30 @@ struct SuiviDashboardView: View {
                             .font(.subheadline)
                             .lineLimit(1)
                         Spacer()
+                        if let freq = tracker.journalFrequence(for: id) {
+                            Text(freq.emoji)
+                                .font(.caption)
+                        }
                         Text("\(days)/7 j")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(days >= 4 ? CarenceColors.alert : CarenceColors.primary)
                     }
                 }
             }
+        }
+        .padding(14)
+        .background(CarenceColors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    private var exportCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Export médical")
+                .font(.headline)
+            Text("PDF avec bilan de référence, journal 14 j, bilan évolutif et contexte grossesse/allaitement.")
+                .font(.caption)
+                .foregroundStyle(CarenceColors.textSecondary)
+            TrackingExportButton()
         }
         .padding(14)
         .background(CarenceColors.surface)
