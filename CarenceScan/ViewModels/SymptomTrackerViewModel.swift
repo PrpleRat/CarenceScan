@@ -7,7 +7,6 @@ final class SymptomTrackerViewModel: ObservableObject {
     static let shared = SymptomTrackerViewModel()
 
     @Published var settings: SymptomTrackingSettings
-    @Published var openDailyCheckIn = false
     @Published private(set) var journalEntries: [SymptomJournalEntry] = []
 
     private init() {
@@ -26,9 +25,41 @@ final class SymptomTrackerViewModel: ObservableObject {
         return ResultsStorage.load()?.symptomeSelections.map(\.symptomeId) ?? []
     }
 
+    var baselineSymptomeIds: [String] {
+        let added = Set(settings.addedSymptomeIds)
+        return trackedSymptomeIds.filter { !added.contains($0) }
+    }
+
+    var addedSymptomeIds: [String] {
+        settings.addedSymptomeIds.filter { trackedSymptomeIds.contains($0) }
+    }
+
+    var isFirstCheckIn: Bool {
+        !settings.hasCompletedFirstCheckIn
+    }
+
     func syncTrackedSymptoms(from selections: [SymptomeSelection]) {
         guard settings.trackedSymptomeIds.isEmpty else { return }
         settings.trackedSymptomeIds = selections.map(\.symptomeId)
+        settings.trackingStartDate = Date()
+        persistSettings()
+    }
+
+    func addTrackedSymptom(_ id: String) {
+        guard !settings.trackedSymptomeIds.contains(id) else { return }
+        settings.trackedSymptomeIds.append(id)
+        if !settings.addedSymptomeIds.contains(id) {
+            settings.addedSymptomeIds.append(id)
+        }
+        if settings.trackingStartDate == nil {
+            settings.trackingStartDate = Date()
+        }
+        persistSettings()
+    }
+
+    func removeTrackedSymptom(_ id: String) {
+        settings.trackedSymptomeIds.removeAll { $0 == id }
+        settings.addedSymptomeIds.removeAll { $0 == id }
         persistSettings()
     }
 
@@ -49,8 +80,21 @@ final class SymptomTrackerViewModel: ObservableObject {
         reloadJournal()
     }
 
+    func markFirstCheckInCompleted() {
+        guard !settings.hasCompletedFirstCheckIn else { return }
+        settings.hasCompletedFirstCheckIn = true
+        if settings.trackingStartDate == nil {
+            settings.trackingStartDate = Date()
+        }
+        persistSettings()
+    }
+
     func presentDaysCount(symptomeId: String, lastDays: Int) -> Int {
         SymptomJournalStorage.entries(for: symptomeId, lastDays: lastDays).filter(\.present).count
+    }
+
+    func journalFrequence(for symptomeId: String) -> JournalFrequence? {
+        SymptomFrequencyEngine.frequence(symptomeId: symptomeId)
     }
 
     func daysWithData(lastDays: Int) -> [Date] {

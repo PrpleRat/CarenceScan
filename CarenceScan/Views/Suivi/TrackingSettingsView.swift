@@ -34,6 +34,12 @@ struct TrackingSettingsView: View {
                 Text(AppConstants.notificationPermissionMessage)
             }
 
+            Section {
+                Text("Le bilan complet est fait une seule fois. Ensuite, le check-in quotidien (oui/non) permet d'estimer si chaque symptôme est fréquent, occasionnel ou résolu après \(SymptomFrequencyEngine.resolutionDays) jours.")
+                    .font(.caption)
+                    .foregroundStyle(CarenceColors.textSecondary)
+            }
+
             Section("Symptômes suivis") {
                 if tracker.trackedSymptomeIds.isEmpty {
                     Text("Les symptômes de votre dernier bilan seront suivis automatiquement.")
@@ -41,8 +47,16 @@ struct TrackingSettingsView: View {
                         .foregroundStyle(CarenceColors.textSecondary)
                 } else {
                     ForEach(tracker.trackedSymptomeIds, id: \.self) { id in
-                        Text(CarenceDatabase.symptomeLabel(for: id))
-                            .font(.subheadline)
+                        HStack {
+                            Text(CarenceDatabase.symptomeLabel(for: id))
+                                .font(.subheadline)
+                            Spacer()
+                            if let freq = tracker.journalFrequence(for: id) {
+                                Text(freq.label)
+                                    .font(.caption2)
+                                    .foregroundStyle(CarenceColors.textSecondary)
+                            }
+                        }
                     }
                 }
             }

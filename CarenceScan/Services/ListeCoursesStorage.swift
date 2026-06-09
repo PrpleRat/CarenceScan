@@ -17,6 +17,10 @@ enum ListeCoursesStorage {
         UserDefaults.standard.set(data, forKey: AppConstants.listeCoursesCheckedKey)
     }
 
+    static func clearCheckedIds() {
+        UserDefaults.standard.removeObject(forKey: AppConstants.listeCoursesCheckedKey)
+    }
+
     static func loadExtraSupermarcheItems() -> [ListeItem] {
         guard let data = UserDefaults.standard.data(forKey: AppConstants.listeCoursesExtraKey),
               let items = try? decoder.decode([ListeItem].self, from: data)

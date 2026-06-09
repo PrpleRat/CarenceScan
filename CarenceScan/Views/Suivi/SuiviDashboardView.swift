@@ -3,7 +3,6 @@ import SwiftUI
 struct SuiviDashboardView: View {
     @EnvironmentObject private var tracker: SymptomTrackerViewModel
     @EnvironmentObject private var tabRouter: AppTabRouter
-    @State private var showCheckIn = false
     @State private var showEvolution = false
 
     private var ids: [String] { tracker.trackedSymptomeIds }
@@ -43,18 +42,11 @@ struct SuiviDashboardView: View {
         .background(CarenceColors.background.ignoresSafeArea())
         .navigationTitle("Suivi")
         .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(isPresented: $showCheckIn) {
-            DailyCheckInView()
-        }
         .navigationDestination(isPresented: $showEvolution) {
             SymptomEvolutionView()
         }
         .onAppear {
             tracker.reloadJournal()
-            if tracker.openDailyCheckIn {
-                showCheckIn = true
-                tracker.openDailyCheckIn = false
-            }
             Task { await SmartNotificationService.evaluateAndSchedule(tracker: tracker) }
         }
     }
@@ -112,7 +104,7 @@ struct SuiviDashboardView: View {
                 .font(.caption)
                 .foregroundStyle(CarenceColors.textSecondary)
             Button {
-                showCheckIn = true
+                tabRouter.openCheckIn()
             } label: {
                 Label("Commencer le check-in", systemImage: "plus.circle.fill")
                     .frame(maxWidth: .infinity)

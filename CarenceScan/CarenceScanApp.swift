@@ -17,6 +17,9 @@ struct CarenceScanApp: App {
                 .environmentObject(questionnaire)
                 .environmentObject(tracker)
                 .environmentObject(tabRouter)
+                .onAppear {
+                    NotificationService.shared.tabRouter = tabRouter
+                }
                 .task {
                     await NotificationService.shared.refreshAuthorizationStatus()
                     await SmartNotificationService.evaluateAndSchedule(tracker: tracker)

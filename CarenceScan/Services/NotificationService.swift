@@ -8,6 +8,9 @@ final class NotificationService: NSObject, ObservableObject {
 
     @Published private(set) var authorizationGranted = false
 
+    /// Routeur injecté par l'app pour les deep links notification.
+    weak var tabRouter: AppTabRouter?
+
     private override init() {
         super.init()
     }
@@ -60,6 +63,11 @@ final class NotificationService: NSObject, ObservableObject {
             withIdentifiers: [AppConstants.dailyReminderNotificationId]
         )
     }
+
+    @MainActor
+    private func handleNotificationTap() {
+        tabRouter?.requestCheckInFromNotification()
+    }
 }
 
 extension NotificationService: UNUserNotificationCenterDelegate {
@@ -74,8 +82,10 @@ extension NotificationService: UNUserNotificationCenterDelegate {
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
-        await MainActor.run {
-            SymptomTrackerViewModel.shared.openDailyCheckIn = true
+        let action = response.notification.request.content.userInfo["action"] as? String
+        guard action == "daily_checkin" || response.actionIdentifier == UNNotificationDefaultActionIdentifier else {
+            return
         }
+        await NotificationService.shared.handleNotificationTap()
     }
 }

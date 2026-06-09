@@ -16,13 +16,56 @@ struct SymptomTrackingSettings: Codable, Equatable {
     var reminderHour: Int
     var reminderMinute: Int
     var trackedSymptomeIds: [String]
+    /// Symptômes ajoutés manuellement pendant le suivi quotidien (hors bilan initial).
+    var addedSymptomeIds: [String]
+    /// Date de début du suivi quotidien.
+    var trackingStartDate: Date?
+    /// Premier check-in quotidien effectué.
+    var hasCompletedFirstCheckIn: Bool
 
     static let `default` = SymptomTrackingSettings(
         notificationsEnabled: false,
         reminderHour: 20,
         reminderMinute: 0,
-        trackedSymptomeIds: []
+        trackedSymptomeIds: [],
+        addedSymptomeIds: [],
+        trackingStartDate: nil,
+        hasCompletedFirstCheckIn: false
     )
+
+    init(
+        notificationsEnabled: Bool,
+        reminderHour: Int,
+        reminderMinute: Int,
+        trackedSymptomeIds: [String],
+        addedSymptomeIds: [String] = [],
+        trackingStartDate: Date? = nil,
+        hasCompletedFirstCheckIn: Bool = false
+    ) {
+        self.notificationsEnabled = notificationsEnabled
+        self.reminderHour = reminderHour
+        self.reminderMinute = reminderMinute
+        self.trackedSymptomeIds = trackedSymptomeIds
+        self.addedSymptomeIds = addedSymptomeIds
+        self.trackingStartDate = trackingStartDate
+        self.hasCompletedFirstCheckIn = hasCompletedFirstCheckIn
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        notificationsEnabled = try c.decodeIfPresent(Bool.self, forKey: .notificationsEnabled) ?? false
+        reminderHour = try c.decodeIfPresent(Int.self, forKey: .reminderHour) ?? 20
+        reminderMinute = try c.decodeIfPresent(Int.self, forKey: .reminderMinute) ?? 0
+        trackedSymptomeIds = try c.decodeIfPresent([String].self, forKey: .trackedSymptomeIds) ?? []
+        addedSymptomeIds = try c.decodeIfPresent([String].self, forKey: .addedSymptomeIds) ?? []
+        trackingStartDate = try c.decodeIfPresent(Date.self, forKey: .trackingStartDate)
+        hasCompletedFirstCheckIn = try c.decodeIfPresent(Bool.self, forKey: .hasCompletedFirstCheckIn) ?? false
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case notificationsEnabled, reminderHour, reminderMinute, trackedSymptomeIds
+        case addedSymptomeIds, trackingStartDate, hasCompletedFirstCheckIn
+    }
 }
 
 struct SymptomeCarenceLink: Identifiable, Hashable {

@@ -4,6 +4,7 @@ struct MainTabView: View {
     @EnvironmentObject private var vm: QuestionnaireViewModel
     @EnvironmentObject private var tracker: SymptomTrackerViewModel
     @EnvironmentObject private var tabRouter: AppTabRouter
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         TabView(selection: $tabRouter.selectedTab) {
@@ -41,9 +42,16 @@ struct MainTabView: View {
         }
         .tint(CarenceColors.primary)
         .preferredColorScheme(.light)
-        .onChange(of: tracker.openDailyCheckIn) { _, open in
-            if open {
-                tabRouter.selectedTab = .suivi
+        .sheet(isPresented: $tabRouter.showCheckInSheet) {
+            NavigationStack {
+                DailyCheckInView()
+                    .environmentObject(tracker)
+                    .environmentObject(tabRouter)
+            }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                tabRouter.consumePendingCheckInIfNeeded()
             }
         }
         .task {

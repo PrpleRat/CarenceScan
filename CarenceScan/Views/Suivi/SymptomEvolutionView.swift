@@ -13,7 +13,7 @@ struct SymptomEvolutionView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                Text("Fréquence de vos symptômes sur les \(lastDays) derniers jours — tous vos symptômes suivis sur une seule page.")
+                Text("Fréquence de vos symptômes sur les \(lastDays) derniers jours. Après \(SymptomFrequencyEngine.resolutionDays) jours sans apparition, un symptôme est considéré comme résolu.")
                     .font(.subheadline)
                     .foregroundStyle(CarenceColors.textSecondary)
 
@@ -63,9 +63,16 @@ struct SymptomEvolutionView: View {
                     .foregroundStyle(CarenceColors.textPrimary)
                     .multilineTextAlignment(.leading)
                 Spacer()
-                Text("\(presentCount)/\(lastDays) j")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(CarenceColors.primary)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("\(presentCount)/\(lastDays) j")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(CarenceColors.primary)
+                    if let freq = SymptomFrequencyEngine.frequence(symptomeId: symptomeId, windowDays: lastDays) {
+                        Text("\(freq.emoji) \(freq.label)")
+                            .font(.caption2)
+                            .foregroundStyle(CarenceColors.textSecondary)
+                    }
+                }
             }
 
             ScrollView(.horizontal, showsIndicators: false) {

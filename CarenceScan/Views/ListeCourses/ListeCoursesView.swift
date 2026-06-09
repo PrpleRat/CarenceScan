@@ -59,7 +59,8 @@ struct ListeCoursesView: View {
             showHomeButton: showHomeButton,
             shareAction: {
                 shareText = ShareTextItem(text: ListeCoursesEngine.genererTextePartage(liste: liste))
-            }
+            },
+            resetAction: resetAllChecked
         ))
         .sheet(item: $shareText) { item in
             ShareSheet(items: [item.text])
@@ -84,9 +85,19 @@ struct ListeCoursesView: View {
             }
             ProgressView(value: progress)
                 .tint(CarenceColors.primary)
-            Text("Semaine du \(semaineCourante)")
-                .font(.caption2)
-                .foregroundStyle(CarenceColors.textSecondary)
+            HStack {
+                Text("Semaine du \(semaineCourante)")
+                    .font(.caption2)
+                    .foregroundStyle(CarenceColors.textSecondary)
+                Spacer()
+                if checkedCount > 0 {
+                    Button("Tout décocher") {
+                        resetAllChecked()
+                    }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(CarenceColors.primary)
+                }
+            }
         }
         .padding(14)
         .background(CarenceColors.surface)
@@ -262,6 +273,11 @@ struct ListeCoursesView: View {
         ListeCoursesStorage.saveCheckedIds(checkedIds)
     }
 
+    private func resetAllChecked() {
+        checkedIds.removeAll()
+        ListeCoursesStorage.clearCheckedIds()
+    }
+
     private func grouperSupermarche(_ items: [ListeItem]) -> [(categorie: String, items: [ListeItem])] {
         let ordre = [
             "Poissons & fruits de mer", "Viandes & œufs", "Légumes verts", "Fruits",
@@ -311,15 +327,23 @@ private struct ListeCoursesNavigationChrome: ViewModifier {
     let embedded: Bool
     let showHomeButton: Bool
     let shareAction: () -> Void
+    let resetAction: () -> Void
 
     func body(content: Content) -> some View {
         if embedded {
             content.toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: shareAction) {
-                        Image(systemName: "square.and.arrow.up")
+                    Menu {
+                        Button(role: .destructive, action: resetAction) {
+                            Label("Tout décocher", systemImage: "arrow.counterclockwise")
+                        }
+                        Button(action: shareAction) {
+                            Label("Partager", systemImage: "square.and.arrow.up")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
                     }
-                    .accessibilityLabel("Partager la liste")
+                    .accessibilityLabel("Actions liste")
                 }
             }
         } else {
@@ -338,10 +362,17 @@ private struct ListeCoursesNavigationChrome: ViewModifier {
                         }
                     }
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button(action: shareAction) {
-                            Image(systemName: "square.and.arrow.up")
+                        Menu {
+                            Button(role: .destructive, action: resetAction) {
+                                Label("Tout décocher", systemImage: "arrow.counterclockwise")
+                            }
+                            Button(action: shareAction) {
+                                Label("Partager", systemImage: "square.and.arrow.up")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
                         }
-                        .accessibilityLabel("Partager la liste")
+                        .accessibilityLabel("Actions liste")
                     }
                 }
         }
