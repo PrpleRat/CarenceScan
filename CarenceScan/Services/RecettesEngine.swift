@@ -3,7 +3,7 @@ import Foundation
 enum RecettesEngine {
 
     private static let base: RecetteBaseFile? = {
-        guard let url = Bundle.main.url(forResource: "recettes_base", withExtension: "json"),
+        guard let url = Bundle.main.url(forResource: "recettes_v2", withExtension: "json"),
               let data = try? Data(contentsOf: url)
         else { return nil }
         return try? JSONDecoder().decode(RecetteBaseFile.self, from: data)

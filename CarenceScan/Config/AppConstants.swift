@@ -27,8 +27,19 @@ enum AppConstants {
     static let listeCoursesExtraKey = "carencescan.liste.extra"
     static let listeCoursesWeekKey = "carencescan.liste.week"
     static let listeCoursesWeekHistoryKey = "carencescan.liste.week.history"
+    static let journalAlimentaireKey = "carencescan.journal.alimentaire.v1"
 
     static let dailyReminderNotificationId = "carencescan.daily.symptoms"
     static let notificationPermissionMessage =
         "CarenceScan peut vous rappeler chaque jour de noter vos symptômes pour suivre leur évolution dans le temps."
+
+    /// Sources scientifiques — journal, synergies et horaires de prise (v1.8).
+    static let sourcesScientifiquesNutrition = """
+    Magnésium + vitamine D : Zittermann et al. (2024, Eur J Nutrition); Dai et al. (Am J Clin Nutr 2018).
+    Zinc + fer : Cambridge Nutrition Reviews (2000); ACS Omega (2022).
+    Vitamine C + fer : ACS Omega (2022).
+    Vitamine D + K2 : van Ballegooijen et al. (Int J Endocrinology, 2017).
+    Prévalences : NHANES / Linus Pauling Institute (2024).
+    Microbiote : Barone et al. (BioFactors, 2022).
+    """
 }

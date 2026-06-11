@@ -9,6 +9,15 @@ struct ResultsView: View {
 
     @State private var showListeCourses = false
     @State private var showRecettes = false
+    @State private var showHoraires = false
+
+    private var carencesActives: Set<String> {
+        Set(NutritionDataLoader.carencesActivesIds(from: vm.scores))
+    }
+
+    private var synergiesDetectees: [SynergieNutriment] {
+        NutritionDataLoader.synergiesDetectees(carencesActives: carencesActives)
+    }
 
     private var payload: SavedResultsPayload? {
         vm.savedPayload
@@ -54,6 +63,10 @@ struct ResultsView: View {
                     emptyState
                 } else {
                     carencesSection
+                    if !synergiesDetectees.isEmpty {
+                        synergiesSection
+                    }
+                    planPriseButton
                     coursesRecettesButtons
                 }
 
@@ -118,6 +131,34 @@ struct ResultsView: View {
         .navigationDestination(isPresented: $showRecettes) {
             RecettesView(scores: vm.scores)
         }
+        .navigationDestination(isPresented: $showHoraires) {
+            HorairesView(scores: vm.scores)
+        }
+    }
+
+    private var synergiesSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Interactions importantes")
+                .font(.headline)
+                .foregroundStyle(CarenceColors.textPrimary)
+
+            ForEach(synergiesDetectees) { synergie in
+                SynergieView(synergie: synergie)
+            }
+        }
+    }
+
+    private var planPriseButton: some View {
+        Button {
+            showHoraires = true
+        } label: {
+            Label("Plan de prise journalier", systemImage: "clock.fill")
+                .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+        }
+        .buttonStyle(.bordered)
+        .tint(CarenceColors.primary)
     }
 
     private var coursesRecettesButtons: some View {
@@ -291,5 +332,6 @@ struct ResultsView: View {
             .environmentObject(QuestionnaireViewModel())
             .environmentObject(SymptomTrackerViewModel.shared)
             .environmentObject(AppTabRouter())
+            .environmentObject(JournalEngine.shared)
     }
 }

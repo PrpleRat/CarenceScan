@@ -6,6 +6,7 @@ struct CarenceScanApp: App {
     @StateObject private var questionnaire = QuestionnaireViewModel()
     @StateObject private var tracker = SymptomTrackerViewModel.shared
     @StateObject private var tabRouter = AppTabRouter()
+    @StateObject private var journal = JournalEngine.shared
 
     init() {
         UNUserNotificationCenter.current().delegate = NotificationService.shared
@@ -17,6 +18,7 @@ struct CarenceScanApp: App {
                 .environmentObject(questionnaire)
                 .environmentObject(tracker)
                 .environmentObject(tabRouter)
+                .environmentObject(journal)
                 .onAppear {
                     NotificationService.shared.tabRouter = tabRouter
                 }

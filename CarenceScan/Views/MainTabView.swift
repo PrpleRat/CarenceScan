@@ -33,6 +33,14 @@ struct MainTabView: View {
             .tag(AppTab.suivi)
 
             NavigationStack {
+                JournalView()
+            }
+            .tabItem {
+                Label("Journal", systemImage: "fork.knife")
+            }
+            .tag(AppTab.journal)
+
+            NavigationStack {
                 CoursesTabRootView()
             }
             .tabItem {

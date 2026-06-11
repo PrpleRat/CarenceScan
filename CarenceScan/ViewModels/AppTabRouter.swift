@@ -4,6 +4,7 @@ enum AppTab: Hashable {
     case accueil
     case bilan
     case suivi
+    case journal
     case courses
 }
 
@@ -38,6 +39,10 @@ final class AppTabRouter: ObservableObject {
 
     func openSuivi() {
         selectedTab = .suivi
+    }
+
+    func openJournal() {
+        selectedTab = .journal
     }
 
     /// Ouvre le check-in via sheet (évite les crashs NavigationLink au cold start).
